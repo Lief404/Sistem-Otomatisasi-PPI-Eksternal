@@ -8,15 +8,12 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         // Akun Admin
         User::create([
             'name' => 'Administrator',
-            'email' => 'admin@polman.edu',
+            'email' => 'admin@admin.polman',
             'password' => Hash::make('password'),
             'role' => 'admin',
         ]);
@@ -24,23 +21,23 @@ class DatabaseSeeder extends Seeder
         // Akun Mahasiswa
         User::create([
             'name' => 'Mahasiswa PPI',
-            'email' => 'mahasiswa@polman.edu',
+            'email' => '223443026@mhs.polman', // Format NIM
             'password' => Hash::make('password'),
             'role' => 'mahasiswa',
         ]);
 
         // Akun Dosen
         User::create([
-            'name' => 'Dosen Pembimbing',
-            'email' => 'dosen@polman.edu',
+            'name' => 'Supriyadi',
+            'email' => 'supriyadi@dosen.polman', // Format Nama Dosen
             'password' => Hash::make('password'),
             'role' => 'dosen',
         ]);
 
         // Akun Mentor Industri
         User::create([
-            'name' => 'Mentor Industri',
-            'email' => 'mentor@industri.com',
+            'name' => 'PT Bukaka Teknik',
+            'email' => 'bukaka@industri.id', // Format Industri
             'password' => Hash::make('password'),
             'role' => 'mentor',
         ]);
