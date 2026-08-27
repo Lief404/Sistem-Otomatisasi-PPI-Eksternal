@@ -10,4 +10,7 @@ class MahasiswaController extends Controller
     {
         return view('mahasiswa.dashboard');
     }
+    public function nilai() {
+        return view('mahasiswa.nilai');
+    }
 }

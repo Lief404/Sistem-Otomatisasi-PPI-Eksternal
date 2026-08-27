@@ -3,449 +3,328 @@
 
 @section('content')
 <!-- Inisialisasi Alpine.js -->
-<div x-data="logbookApp()" class="space-y-6">
+<div x-data="logbookApp()" class="space-y-8 max-w-6xl mx-auto pb-16 font-sans">
     
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
+    <!-- Header Panel -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-6 bg-white p-6 rounded-2xl shadow-[6px_6px_0_0_#1e3a8a] border-2">
         <div>
-            <h2 class="text-3xl font-black text-blue-900 tracking-wide">Logbook Mingguan</h2>
-            <p class="text-gray-600 mt-1 font-medium">Catat aktivitas, jam lembur, dan absensi Anda secara terstruktur.</p>
+            <h2 class="text-3xl md:text-4xl font-black text-blue-900 tracking-tight">Logbook Mingguan</h2>
+            <p class="text-gray-600 mt-2 font-bold text-lg">Catat aktivitas harian, jam magang, dan absensi secara terstruktur.</p>
         </div>
-        <div class="mt-4 md:mt-0 bg-white border-2 border-blue-900 px-4 py-2 rounded-lg shadow-[4px_4px_0_0_#1e3a8a] text-sm font-bold flex items-center gap-3">
-            <span class="text-gray-600">Progres Keseluruhan:</span>
-            <span class="text-blue-700 bg-blue-100 px-2 py-1 rounded" x-text="getTotalCompletedWeeks() + ' / 20 Minggu'"></span>
-        </div>
-    </div>
-
-    <!-- Statistik Rekap Jam -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div class="bg-white p-4 rounded-xl border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
-            <p class="text-xs font-bold text-gray-500 uppercase">Total Jam Kerja</p>
-            <p class="text-3xl font-black text-blue-700 mt-1" x-text="getTotalHours() + ' Jam'"></p>
-        </div>
-        <div class="bg-yellow-50 p-4 rounded-xl border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
-            <p class="text-xs font-bold text-yellow-800 uppercase">PII</p>
-            <p class="text-2xl font-black text-blue-900 mt-1" x-text="getHoursByMatkul('PII') + ' Jam'"></p>
-        </div>
-        <div class="bg-green-50 p-4 rounded-xl border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
-            <p class="text-xs font-bold text-green-800 uppercase">Supervisi</p>
-            <p class="text-2xl font-black text-blue-900 mt-1" x-text="getHoursByMatkul('SUP') + ' Jam'"></p>
-        </div>
-        <div class="bg-red-50 p-4 rounded-xl border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
-            <p class="text-xs font-bold text-red-800 uppercase">K3 IT</p>
-            <p class="text-2xl font-black text-blue-900 mt-1" x-text="getHoursByMatkul('K3') + ' Jam'"></p>
-        </div>
-        <div class="bg-purple-50 p-4 rounded-xl border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
-            <p class="text-xs font-bold text-purple-800 uppercase">Lap. Teknik</p>
-            <p class="text-2xl font-black text-blue-900 mt-1" x-text="getHoursByMatkul('LTD') + ' Jam'"></p>
-        </div>
-    </div>
-
-    <!-- Tombol Tambah -->
-    <div class="pt-4">
-        <button @click="showForm = !showForm" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all duration-200 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
-            <span x-text="showForm ? 'Tutup Form' : 'Tambah Logbook Baru'"></span>
-        </button>
-    </div>
-
-    <!-- PANEL FORM DINAMIS (Tersembunyi secara default) -->
-    <div x-show="showForm" x-collapse>
-        <div class="bg-white p-6 rounded-xl border-2 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] mb-8">
-            <div class="flex gap-4 border-b-2 border-gray-200 pb-4 mb-4">
-                <button @click="formType = 'kerja'" :class="formType === 'kerja' ? 'bg-blue-100 border-blue-900 text-blue-900 shadow-[2px_2px_0_0_#1e3a8a]' : 'bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100'" class="px-6 py-2 rounded font-bold border-2 transition-all">Aktivitas & Lembur</button>
-                <button @click="formType = 'izin'" :class="formType === 'izin' ? 'bg-red-100 border-red-900 text-red-900 shadow-[2px_2px_0_0_#7f1d1d]' : 'bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100'" class="px-6 py-2 rounded font-bold border-2 transition-all">Izin / Sakit</button>
+        <div class="mt-4 md:mt-0 bg-blue-50 border-2 border-blue-900 px-5 py-3 rounded-xl shadow-[4px_4px_0_0_#1e3a8a] text-sm font-bold flex items-center gap-4 transition-transform hover:-translate-y-1">
+            <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center border-2 border-blue-900">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
+            <div>
+                <span class="text-gray-500 block text-xs uppercase tracking-wider mb-0.5">Progres Keseluruhan</span>
+                <span class="text-blue-900 text-xl font-black" x-text="getTotalCompletedWeeks() + ' / 20 Minggu'"></span>
+            </div>
+        </div>
+    </div>
 
-            <form @submit.prevent="saveForm()" class="space-y-6">
-                <!-- Pemilihan Tanggal Global Form -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700">Pilih Minggu</label>
-                        <select x-model.number="form.minggu" required class="mt-1 w-full border-2 border-gray-300 rounded-lg p-2 focus:border-blue-600 outline-none font-bold text-blue-900">
-                            <template x-for="w in 20" :key="w"><option :value="w" x-text="'Minggu ke-' + w"></option></template>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700">Tanggal Kegiatan</label>
-                        <input type="date" x-model="form.tanggal" required class="mt-1 w-full border-2 border-gray-300 rounded-lg p-2 focus:border-blue-600 outline-none font-bold">
-                    </div>
-                </div>
-
-                <!-- JIKA PILIH KERJA (BISA MULTI-INPUT) -->
-                <template x-if="formType === 'kerja'">
-                    <div class="space-y-4">
-                        <template x-for="(act, index) in form.activities" :key="index">
-                            <div class="relative bg-white p-4 rounded-lg border-2 border-blue-200">
-                                <!-- Tombol Hapus Baris -->
-                                <button type="button" @click="removeActivityRow(index)" x-show="form.activities.length > 1" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                                    <div class="md:col-span-1">
-                                        <label class="block text-xs font-bold text-gray-700">Tipe Jam</label>
-                                        <select x-model="act.tipeKerja" class="mt-1 w-full border-2 border-gray-300 rounded p-2 focus:border-blue-600 outline-none font-bold text-sm">
-                                            <option value="Reguler">Reguler</option>
-                                            <option value="Lembur">Lembur</option>
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <label class="block text-xs font-bold text-gray-700">Mulai</label>
-                                        <input type="time" x-model="act.jamMulai" required @change="calcRowDuration(act)" class="mt-1 w-full border-2 border-gray-300 rounded p-2 focus:border-blue-600 outline-none font-bold text-sm">
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <label class="block text-xs font-bold text-gray-700">Selesai</label>
-                                        <input type="time" x-model="act.jamSelesai" required @change="calcRowDuration(act)" class="mt-1 w-full border-2 border-gray-300 rounded p-2 focus:border-blue-600 outline-none font-bold text-sm">
-                                    </div>
-                                    <div class="md:col-span-1">
-                                        <label class="block text-xs font-bold text-gray-700">Matkul</label>
-                                        <select x-model="act.matkul" required class="mt-1 w-full border-2 border-gray-300 rounded p-2 focus:border-blue-600 outline-none font-bold text-sm">
-                                            <option value="" disabled>Pilih</option>
-                                            <option value="PII">PII</option>
-                                            <option value="SUP">SUP</option>
-                                            <option value="K3">K3</option>
-                                            <option value="LTD">LTD</option>
-                                        </select>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label class="block text-xs font-bold text-gray-700">Kegiatan <span class="text-blue-600 ml-2" x-text="act.durasi + ' Jam'"></span></label>
-                                        <input type="text" x-model="act.deskripsi" required class="mt-1 w-full border-2 border-gray-300 rounded p-2 focus:border-blue-600 outline-none font-medium text-sm" placeholder="Contoh: Maintenance server...">
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-
-                        <!-- Tombol Tambah Baris -->
-                        <button type="button" @click="addActivityRow()" class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 border-2 border-dashed border-blue-300 rounded-lg px-4 py-2 w-full justify-center bg-blue-50">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            Tambah Kegiatan Lain di Hari yang Sama
-                        </button>
-                    </div>
-                </template>
-
-                <!-- JIKA PILIH IZIN/SAKIT -->
-                <template x-if="formType === 'izin'">
-                    <div class="space-y-4 bg-red-50 p-4 rounded-lg border-2 border-red-200">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700">Kategori</label>
-                                <select x-model="form.kategoriIzin" class="mt-1 w-full border-2 border-gray-300 rounded-lg p-2 focus:border-red-600 outline-none font-bold text-red-800">
-                                    <option value="Sakit">Sakit</option>
-                                    <option value="Izin">Izin (Keperluan Keluarga/Kampus)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700">Lama Absen</label>
-                                <select x-model="form.durasiIzin" class="mt-1 w-full border-2 border-gray-300 rounded-lg p-2 focus:border-red-600 outline-none font-bold">
-                                    <option value="Sehari Penuh">Sehari Penuh</option>
-                                    <option value="Setengah Hari">Setengah Hari</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700">Keterangan / Alasan</label>
-                            <input type="text" x-model="form.alasanIzin" class="mt-1 w-full border-2 border-gray-300 rounded-lg p-2 focus:border-red-600 outline-none font-medium" placeholder="Tuliskan alasan lengkapnya di sini...">
-                        </div>
-                    </div>
-                </template>
-
-                <div class="flex justify-end pt-2 border-t-2 border-gray-200">
-                    <button type="submit" class="bg-green-500 text-white font-bold py-2 px-8 rounded-lg border-2 border-green-900 shadow-[4px_4px_0_0_#14532d] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all active:bg-green-600">
-                        Simpan Data
-                    </button>
-                </div>
-            </form>
+    <!-- Statistik Rekap Jam (Warna Dinetralkan agar bersih) -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
+        <div class="bg-blue-900 p-5 rounded-2xl border-2 border-blue-950 shadow-[4px_4px_0_0_#1e3a8a] transform transition hover:-translate-y-1">
+            <p class="text-xs font-bold text-blue-200 uppercase tracking-widest">Total Jam Kerja</p>
+            <p class="text-3xl font-black text-white mt-2"><span x-text="getTotalHours()"></span><span class="text-base text-blue-300 ml-1">Jam</span></p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-[4px_4px_0_0_#cbd5e1] transform transition hover:-translate-y-1">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">PII</p>
+            <p class="text-3xl font-black text-gray-900 mt-2"><span x-text="getHoursByMatkul('PII')"></span><span class="text-base text-gray-400 ml-1">Jam</span></p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-[4px_4px_0_0_#cbd5e1] transform transition hover:-translate-y-1">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Supervisi</p>
+            <p class="text-3xl font-black text-gray-900 mt-2"><span x-text="getHoursByMatkul('SUP')"></span><span class="text-base text-gray-400 ml-1">Jam</span></p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-[4px_4px_0_0_#cbd5e1] transform transition hover:-translate-y-1">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">K3 IT</p>
+            <p class="text-3xl font-black text-gray-900 mt-2"><span x-text="getHoursByMatkul('K3')"></span><span class="text-base text-gray-400 ml-1">Jam</span></p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border-2 border-gray-300 shadow-[4px_4px_0_0_#cbd5e1] transform transition hover:-translate-y-1">
+            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Lap. Teknik</p>
+            <p class="text-3xl font-black text-gray-900 mt-2"><span x-text="getHoursByMatkul('LTD')"></span><span class="text-base text-gray-400 ml-1">Jam</span></p>
         </div>
     </div>
 
     <!-- HIERARKI DATA: MINGGU -> HARI -> TABEL AKTIVITAS -->
     <div class="space-y-6">
-        <template x-for="week in weeksConfig" :key="week.num">
+        <template x-for="(week, wIndex) in weeks" :key="week.id">
             
-            <!-- LEVEL 1: MINGGU -->
-            <div class="bg-white rounded-xl border-2 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] overflow-hidden" x-data="{ weekExpanded: false }">
+            <!-- LEVEL 1: CARD MINGGU -->
+            <div class="bg-white rounded-2xl border-2 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] overflow-hidden transition-all duration-300">
+                
                 <!-- Header Minggu -->
-                <div class="p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center cursor-pointer hover:bg-blue-50 transition-colors border-b-2 border-blue-100" @click="weekExpanded = !weekExpanded">
-                    <div class="flex items-center gap-4">
-                        <div class="w-5 h-5 rounded-full border-2 border-gray-800 shadow-sm" :class="isWeekComplete(week.num) ? 'bg-blue-500' : 'bg-orange-400'"></div>
+                <div class="p-5 md:p-6 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center cursor-pointer hover:bg-blue-50 transition-colors border-b-2 border-blue-100 group" @click="week.expanded = !week.expanded">
+                    <div class="flex items-center gap-5">
+                        <!-- Icon Indikator -->
+                        <div class="w-12 h-12 rounded-xl border-2 border-blue-900 flex items-center justify-center transition-colors shadow-[2px_2px_0_0_#1e3a8a]" :class="getWeekTotalMinutes(week) > 0 ? 'bg-blue-600 text-white' : 'bg-white text-blue-900 group-hover:bg-blue-100'">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
                         <div>
-                            <h3 class="text-xl font-black text-blue-900" x-text="'Minggu ' + week.num"></h3>
-                            <p class="text-sm font-bold text-gray-500" x-text="getDaysFilled(week.num) + ' dari ' + week.target + ' Hari Terisi'"></p>
+                            <h3 class="text-2xl font-black text-blue-900" x-text="'Minggu ke-' + String(week.id).padStart(2, '0')"></h3>
+                            <p class="text-sm font-bold text-gray-500 mt-1">
+                                <span x-text="getWeekTotalMinutes(week) > 0 ? (getWeekTotalMinutes(week) / 60).toFixed(1) + ' Jam diselesaikan' : 'Belum ada pengisian data'"></span>
+                            </p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4 mt-2 md:mt-0" @click.stop>
-                        <div class="flex items-center gap-2">
-                            <label class="text-xs font-bold text-gray-600 uppercase">Target Hari:</label>
-                            <select x-model.number="week.target" class="border-2 border-gray-300 rounded p-1 text-sm font-bold outline-none cursor-pointer">
-                                <option value="5">5 Hari</option>
-                                <option value="6">6 Hari</option>
-                                <option value="7">7 Hari</option>
-                            </select>
+                    
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4 md:mt-0 w-full md:w-auto" @click.stop>
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg border-2 border-gray-300 w-full sm:w-auto">
+                            <span class="text-xs font-black text-gray-500 uppercase pl-2">Tanggal:</span>
+                            <input type="date" x-model="week.startDate" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
+                            <span class="text-gray-300 font-bold">-</span>
+                            <input type="date" x-model="week.endDate" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
                         </div>
-                        <svg :class="weekExpanded ? 'rotate-180' : ''" class="w-6 h-6 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="bg-white border-2 border-blue-900 p-2 rounded-lg text-blue-900 shadow-[2px_2px_0_0_#1e3a8a] group-hover:translate-y-px group-hover:translate-x-px group-hover:shadow-none transition-all hidden sm:block cursor-pointer">
+                            <svg :class="week.expanded ? 'rotate-180' : ''" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Isi Minggu -->
-                <div x-show="weekExpanded" x-collapse class="p-4 bg-blue-50/30">
-                    <template x-if="getGroupedByDate(week.num).length === 0">
-                        <div class="text-center py-6 text-gray-400 font-bold border-2 border-dashed border-gray-300 rounded-lg bg-white">
-                            Belum ada pengisian di minggu ini.
-                        </div>
-                    </template>
-
-                    <!-- LEVEL 2: GROUP PER HARI -->
-                    <div class="space-y-4">
-                        <template x-for="dayGroup in getGroupedByDate(week.num)" :key="dayGroup.tanggal">
-                            <div class="border-2 border-blue-900 rounded-lg overflow-hidden bg-white shadow-sm" x-data="{ dayExpanded: true }">
+                <!-- Isi Minggu (Daftar Hari) -->
+                <div x-show="week.expanded" x-collapse.duration.400ms>
+                    <div class="p-4 md:p-6 bg-white space-y-4">
+                        
+                        <template x-for="(day, dIndex) in week.days" :key="day.id">
+                            
+                            <!-- LEVEL 2: CARD HARI -->
+                            <div class="border-2 border-gray-200 rounded-xl overflow-hidden transition-all duration-300" :class="day.expanded ? 'border-gray-400 shadow-[2px_2px_0_0_#cbd5e1]' : 'hover:border-gray-300'">
                                 
                                 <!-- Header Hari -->
-                                <div class="bg-blue-100 p-3 flex justify-between items-center cursor-pointer hover:bg-blue-200 transition-colors" @click="dayExpanded = !dayExpanded">
-                                    <div class="flex items-center gap-2">
-                                        <svg :class="dayExpanded ? 'rotate-90' : ''" class="w-5 h-5 text-blue-800 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                        <span class="font-black text-blue-900" x-text="formatDate(dayGroup.tanggal)"></span>
+                                <div class="px-5 py-4 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center cursor-pointer select-none group" @click="day.expanded = !day.expanded">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-1 rounded text-gray-400 group-hover:text-gray-800 transition-colors">
+                                            <svg :class="day.expanded ? 'rotate-90 text-gray-800' : ''" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                                        </div>
+                                        <h4 class="text-lg font-black text-gray-800 w-20" x-text="day.name"></h4>
+                                        
+                                        <!-- Indikator Status Neo-Brutal -->
+                                        <span class="px-3 py-1 text-xs font-black uppercase tracking-widest rounded border-2" 
+                                              :class="{
+                                                  'bg-blue-50 text-blue-800 border-blue-200': day.status === 'Kerja',
+                                                  'bg-gray-100 text-gray-700 border-gray-300': day.status === 'Libur',
+                                                  'bg-yellow-50 text-yellow-800 border-yellow-200': day.status === 'Izin',
+                                                  'bg-red-50 text-red-800 border-red-200': day.status === 'Sakit'
+                                              }" x-text="day.status"></span>
                                     </div>
-                                    <span class="font-black text-blue-700 bg-white px-2 py-1 rounded text-xs border border-blue-300" x-text="'Total: ' + dayGroup.totalDurasi.toFixed(1) + ' Jam'"></span>
+                                    
+                                    <div class="flex items-center mt-3 sm:mt-0 ml-14 sm:ml-0">
+                                        <span class="text-sm font-bold text-gray-500 bg-white border-2 border-gray-200 px-3 py-1.5 rounded-lg">
+                                            Total: <span class="text-gray-900 font-black ml-1" x-text="getDayTotalMinutes(day) + ' menit'"></span>
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <!-- LEVEL 3: TABEL DATA HARIAN -->
-                                <div x-show="dayExpanded" x-collapse class="overflow-x-auto">
-                                    <table class="w-full text-left border-collapse text-sm">
-                                        <thead>
-                                            <tr class="bg-gray-50 border-b-2 border-blue-200 text-gray-600">
-                                                <th class="p-3 font-bold w-1/6">Waktu</th>
-                                                <th class="p-3 font-bold w-1/6">Tipe / Matkul</th>
-                                                <th class="p-3 font-bold w-2/6">Deskripsi Kegiatan</th>
-                                                <th class="p-3 font-bold w-1/6 text-center">Durasi</th>
-                                                <th class="p-3 font-bold w-1/6 text-center">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <template x-for="entry in dayGroup.items" :key="entry.id">
-                                                <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                                    
-                                                    <!-- JIKA MODE EDIT -->
-                                                    <template x-if="entry.isEditing">
-                                                        <td colspan="5" class="p-2 bg-yellow-50">
-                                                            <div class="flex flex-wrap gap-2 items-center">
-                                                                <input type="time" x-model="entry.jamMulai" @change="recalcEntry(entry)" class="border border-gray-400 p-1 rounded text-xs w-20">
-                                                                <span>-</span>
-                                                                <input type="time" x-model="entry.jamSelesai" @change="recalcEntry(entry)" class="border border-gray-400 p-1 rounded text-xs w-20">
-                                                                <select x-model="entry.tipeKerja" class="border border-gray-400 p-1 rounded text-xs"><option value="Reguler">Reguler</option><option value="Lembur">Lembur</option></select>
-                                                                <select x-model="entry.matkul" class="border border-gray-400 p-1 rounded text-xs"><option value="PII">PII</option><option value="SUP">SUP</option><option value="K3">K3</option><option value="LTD">LTD</option></select>
-                                                                <input type="text" x-model="entry.deskripsi" class="border border-gray-400 p-1 rounded text-xs flex-1">
-                                                                <button @click="entry.isEditing = false" class="bg-green-500 text-white px-3 py-1 rounded font-bold text-xs">Simpan</button>
-                                                            </div>
-                                                        </td>
-                                                    </template>
+                                <!-- Form Hari (Expand) -->
+                                <div x-show="day.expanded" x-collapse.duration.300ms>
+                                    <div class="p-4 md:p-5 border-t-2 border-gray-200 bg-white">
+                                        
+                                        <!-- Pilihan Status Hari Ini -->
+                                        <div class="flex flex-wrap gap-2 mb-5 bg-gray-50 p-1.5 rounded-lg border-2 border-gray-200 w-fit">
+                                            <button @click="day.status = 'Kerja'" :class="day.status === 'Kerja' ? 'bg-blue-600 text-white border-blue-900 shadow-[2px_2px_0_0_#1e3a8a]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'" class="px-4 py-1.5 rounded font-bold border-2 transition-all text-xs uppercase">Kerja</button>
+                                            <button @click="day.status = 'Libur'" :class="day.status === 'Libur' ? 'bg-gray-700 text-white border-black shadow-[2px_2px_0_0_#000000]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'" class="px-4 py-1.5 rounded font-bold border-2 transition-all text-xs uppercase">Libur</button>
+                                            <button @click="day.status = 'Izin'" :class="day.status === 'Izin' ? 'bg-yellow-400 text-yellow-900 border-yellow-700 shadow-[2px_2px_0_0_#a16207]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'" class="px-4 py-1.5 rounded font-bold border-2 transition-all text-xs uppercase">Izin</button>
+                                            <button @click="day.status = 'Sakit'" :class="day.status === 'Sakit' ? 'bg-red-500 text-white border-red-900 shadow-[2px_2px_0_0_#7f1d1d]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'" class="px-4 py-1.5 rounded font-bold border-2 transition-all text-xs uppercase">Sakit</button>
+                                        </div>
 
-                                                    <!-- JIKA MODE VIEW -->
-                                                    <template x-if="!entry.isEditing">
-                                                        <!-- Kolom 1: Waktu -->
-                                                        <td class="p-3 font-semibold text-gray-700 whitespace-nowrap">
-                                                            <template x-if="entry.type === 'kerja'">
-                                                                <span x-text="entry.jamMulai + ' - ' + entry.jamSelesai"></span>
+                                        <!-- JIKA STATUS KERJA (Tabel Logbook Clean & Rapi) -->
+                                        <template x-if="day.status === 'Kerja'">
+                                            <div>
+                                                <div class="overflow-x-auto rounded-xl border-2 border-gray-300 bg-white">
+                                                    <table class="w-full text-left text-sm whitespace-nowrap">
+                                                        <thead>
+                                                            <tr class="bg-gray-100 text-gray-800 border-b-2 border-gray-300">
+                                                                <th class="px-4 py-3 font-black w-1/4 text-center border-r-2 border-gray-300">JAM <span class="font-bold text-[10px] text-gray-500 block uppercase mt-0.5 tracking-widest">Mulai - Selesai</span></th>
+                                                                <th class="px-4 py-3 font-black w-2/4 border-r-2 border-gray-300">KEGIATAN / DESKRIPSI</th>
+                                                                <th class="px-4 py-3 font-black w-1/6 text-center leading-tight border-r-2 border-gray-300">KODE<br>MATKUL</th>
+                                                                <th class="px-4 py-3 font-black w-1/6 text-center border-r-2 border-gray-300">WAKTU <span class="font-bold text-[10px] text-gray-500 block uppercase mt-0.5 tracking-widest">(Menit)</span></th>
+                                                                <th class="px-2 py-3 w-10"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y-2 divide-gray-100">
+                                                            <template x-for="(act, aIndex) in day.activities" :key="aIndex">
+                                                                <tr class="hover:bg-blue-50/50 transition-colors group">
+                                                                    <!-- Jam Input -->
+                                                                    <td class="px-3 py-3 border-r-2 border-gray-100 align-top">
+                                                                        <div class="flex items-center justify-center gap-1">
+                                                                            <input type="time" x-model="act.jamMulai" @change="calcTime(act)" class="bg-white border-2 border-gray-200 rounded p-1.5 text-sm font-bold text-gray-800 focus:border-blue-600 outline-none w-24 text-center transition-colors shadow-sm">
+                                                                            <span class="text-gray-400 font-black">-</span>
+                                                                            <input type="time" x-model="act.jamSelesai" @change="calcTime(act)" class="bg-white border-2 border-gray-200 rounded p-1.5 text-sm font-bold text-gray-800 focus:border-blue-600 outline-none w-24 text-center transition-colors shadow-sm">
+                                                                        </div>
+                                                                    </td>
+                                                                    <!-- Kegiatan Input -->
+                                                                    <td class="px-3 py-3 border-r-2 border-gray-100 align-top">
+                                                                        <textarea x-model="act.kegiatan" rows="2" class="w-full bg-white border-2 border-gray-200 rounded p-2 text-sm font-semibold text-gray-800 focus:border-blue-600 outline-none resize-none transition-colors shadow-sm" placeholder="Ketik deskripsi kegiatan..."></textarea>
+                                                                    </td>
+                                                                    <!-- Kode Matkul -->
+                                                                    <td class="px-3 py-3 border-r-2 border-gray-100 align-top text-center pt-4">
+                                                                        <select x-model="act.kode" class="bg-white border-2 border-gray-200 rounded p-1.5 text-sm font-black text-gray-800 text-center focus:border-blue-600 outline-none w-full max-w-[80px] appearance-none cursor-pointer shadow-sm transition-all mx-auto block">
+                                                                            <option value="SUP">SUP</option>
+                                                                            <option value="PII">PII</option>
+                                                                            <option value="K3">K3</option>
+                                                                            <option value="LTD">LTD</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <!-- Waktu Terkalkulasi -->
+                                                                    <td class="px-4 py-3 border-r-2 border-gray-100 align-top text-center pt-5">
+                                                                        <span class="font-mono font-black text-lg text-gray-800" x-text="act.waktu + ' \''"></span>
+                                                                    </td>
+                                                                    <!-- Aksi Hapus -->
+                                                                    <td class="px-2 py-3 align-top pt-4 text-center">
+                                                                        <button @click="removeActivity(day, aIndex)" x-show="day.activities.length > 1" class="text-gray-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded" title="Hapus baris">
+                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
                                                             </template>
-                                                            <template x-if="entry.type === 'izin'">
-                                                                <span class="text-red-500" x-text="entry.durasiIzin"></span>
-                                                            </template>
-                                                        </td>
-                                                    </template>
+                                                            
+                                                            <!-- Footer Total Harian (Bersih) -->
+                                                            <tr class="bg-gray-100 border-t-2 border-gray-300">
+                                                                <td colspan="3" class="px-4 py-3 text-right font-black text-gray-700 uppercase tracking-widest text-xs border-r-2 border-gray-300">JUMLAH MENIT</td>
+                                                                <td class="px-4 py-3 text-center border-r-2 border-gray-300">
+                                                                    <span class="font-mono font-black text-gray-900 text-lg" x-text="getDayTotalMinutes(day) + ' \''"></span>
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                
+                                                <!-- Tombol Tambah Baris -->
+                                                <div class="mt-4">
+                                                    <button @click="addActivity(day)" class="text-sm font-bold text-gray-600 bg-white hover:text-blue-700 hover:border-blue-400 border-2 border-dashed border-gray-300 px-4 py-2 rounded-lg transition-all flex items-center gap-2 w-full justify-center">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+                                                        Tambah Baris Kegiatan Baru
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
 
-                                                    <template x-if="!entry.isEditing">
-                                                        <!-- Kolom 2: Tipe & Matkul -->
-                                                        <td class="p-3">
-                                                            <template x-if="entry.type === 'kerja'">
-                                                                <div>
-                                                                    <span :class="entry.tipeKerja === 'Lembur' ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-gray-100 text-gray-700 border-gray-300'" class="px-2 py-0.5 rounded text-xs font-bold border block w-fit mb-1" x-text="entry.tipeKerja"></span>
-                                                                    <span class="bg-blue-900 text-white px-2 py-0.5 rounded text-xs font-bold" x-text="entry.matkul"></span>
-                                                                </div>
-                                                            </template>
-                                                            <template x-if="entry.type === 'izin'">
-                                                                <span class="bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold" x-text="entry.kategoriIzin"></span>
-                                                            </template>
-                                                        </td>
-                                                    </template>
+                                        <!-- JIKA STATUS LIBUR/IZIN/SAKIT -->
+                                        <template x-if="day.status !== 'Kerja'">
+                                            <div class="bg-gray-50 border-2 border-gray-200 p-5 rounded-xl">
+                                                <label class="block text-sm font-black text-gray-600 mb-2 uppercase tracking-wide">Keterangan / Alasan (Opsional)</label>
+                                                <textarea x-model="day.notes" rows="2" class="w-full bg-white border-2 border-gray-300 rounded-lg p-3 text-sm font-bold text-gray-800 focus:border-blue-600 outline-none resize-none transition-colors" placeholder="Ketik keterangan di sini jika diperlukan..."></textarea>
+                                            </div>
+                                        </template>
 
-                                                    <template x-if="!entry.isEditing">
-                                                        <!-- Kolom 3: Deskripsi -->
-                                                        <td class="p-3 text-gray-800 font-medium">
-                                                            <span x-text="entry.type === 'kerja' ? entry.deskripsi : entry.alasanIzin"></span>
-                                                        </td>
-                                                    </template>
+                                        <!-- TOMBOL SIMPAN HARIAN -->
+                                        <div class="mt-6 pt-5 border-t-2 border-gray-200 flex justify-end">
+                                            <button @click="saveDay(week.id, day.name)" class="bg-green-500 text-white font-black py-2.5 px-8 rounded-lg border-2 border-green-900 shadow-[4px_4px_0_0_#064e3b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all duration-200 text-sm flex items-center gap-2">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                                Simpan Hari Ini
+                                            </button>
+                                        </div>
 
-                                                    <template x-if="!entry.isEditing">
-                                                        <!-- Kolom 4: Durasi -->
-                                                        <td class="p-3 text-center">
-                                                            <span class="font-black text-blue-700" x-text="entry.type === 'kerja' ? entry.durasiTotal + ' J' : '-'"></span>
-                                                        </td>
-                                                    </template>
-
-                                                    <template x-if="!entry.isEditing">
-                                                        <!-- Kolom 5: Aksi -->
-                                                        <td class="p-3 text-center space-x-2">
-                                                            <template x-if="entry.type === 'kerja'">
-                                                                <button @click="entry.isEditing = true" class="text-blue-500 hover:text-blue-700">
-                                                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                                                </button>
-                                                            </template>
-                                                            <button @click="deleteEntry(entry.id)" class="text-red-500 hover:text-red-700">
-                                                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                            </button>
-                                                        </td>
-                                                    </template>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
+                                    </div>
                                 </div>
                             </div>
                         </template>
+
                     </div>
                 </div>
             </div>
+
         </template>
     </div>
+
 </div>
 
-<!-- Logika JS Alpine -->
 <script>
     function logbookApp() {
         return {
-            showForm: false,
-            formType: 'kerja',
-            entries: [], 
-            entryIdCounter: 1,
+            weeks: [],
             
-            weeksConfig: Array.from({length: 20}, (_, i) => ({ num: i + 1, target: 5 })),
-
-            form: {
-                minggu: 1,
-                tanggal: '',
-                activities: [
-                    { tipeKerja: 'Reguler', jamMulai: '', jamSelesai: '', matkul: '', deskripsi: '', durasi: 0 }
-                ],
-                kategoriIzin: 'Sakit', durasiIzin: 'Sehari Penuh', alasanIzin: ''
-            },
-            
-            addActivityRow() {
-                this.form.activities.push({ tipeKerja: 'Reguler', jamMulai: '', jamSelesai: '', matkul: '', deskripsi: '', durasi: 0 });
-            },
-
-            removeActivityRow(index) {
-                this.form.activities.splice(index, 1);
-            },
-
-            calcRowDuration(row) {
-                if (row.jamMulai && row.jamSelesai) {
-                    let start = new Date(`1970-01-01T${row.jamMulai}:00`);
-                    let end = new Date(`1970-01-01T${row.jamSelesai}:00`);
-                    let diff = (end - start) / 1000 / 60 / 60; 
-                    if(diff < 0) diff += 24; 
-                    row.durasi = diff.toFixed(1);
-                }
-            },
-
-            recalcEntry(entry) {
-                if (entry.jamMulai && entry.jamSelesai) {
-                    let start = new Date(`1970-01-01T${entry.jamMulai}:00`);
-                    let end = new Date(`1970-01-01T${entry.jamSelesai}:00`);
-                    let diff = (end - start) / 1000 / 60 / 60; 
-                    if(diff < 0) diff += 24; 
-                    entry.durasiTotal = diff.toFixed(1);
-                }
-            },
-
-            saveForm() {
-                if(!this.form.tanggal) { alert("Tanggal wajib diisi!"); return; }
-
-                if (this.formType === 'kerja') {
-                    this.form.activities.forEach(act => {
-                        if(act.durasi > 0 && act.matkul && act.deskripsi) {
-                            this.entries.push({
-                                id: this.entryIdCounter++,
-                                minggu: this.form.minggu,
-                                tanggal: this.form.tanggal,
-                                type: 'kerja',
-                                tipeKerja: act.tipeKerja,
-                                jamMulai: act.jamMulai,
-                                jamSelesai: act.jamSelesai,
-                                matkul: act.matkul,
-                                deskripsi: act.deskripsi,
-                                durasiTotal: act.durasi,
-                                isEditing: false
-                            });
-                        }
-                    });
-                } else {
-                    this.entries.push({
-                        id: this.entryIdCounter++,
-                        minggu: this.form.minggu,
-                        tanggal: this.form.tanggal,
-                        type: 'izin',
-                        kategoriIzin: this.form.kategoriIzin,
-                        durasiIzin: this.form.durasiIzin,
-                        alasanIzin: this.form.alasanIzin,
-                        durasiTotal: 0,
-                        isEditing: false
-                    });
-                }
+            init() {
+                // Inisialisasi struktur data 20 minggu (Senin-Jumat)
+                const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
                 
-                // Reset Form state
-                this.form.tanggal = '';
-                this.form.activities = [{ tipeKerja: 'Reguler', jamMulai: '', jamSelesai: '', matkul: '', deskripsi: '', durasi: 0 }];
-                this.form.alasanIzin = '';
-                this.showForm = false;
-            },
+                for (let i = 1; i <= 20; i++) {
+                    let daysArr = [];
+                    for(let d = 0; d < 5; d++) {
+                        daysArr.push({
+                            id: d,
+                            name: dayNames[d],
+                            status: 'Kerja', // Default: Kerja
+                            notes: '',
+                            expanded: false,
+                            activities: [this.emptyActivity()]
+                        });
+                    }
 
-            deleteEntry(id) {
-                if(confirm("Hapus baris kegiatan ini?")) {
-                    this.entries = this.entries.filter(e => e.id !== id);
+                    this.weeks.push({
+                        id: i,
+                        expanded: i === 1, // Buka minggu ke-1 secara otomatis
+                        startDate: '',
+                        endDate: '',
+                        days: daysArr
+                    });
                 }
             },
 
-            // --- FUNGSI PENGELOMPOKAN --- //
-            getGroupedByDate(weekNum) {
-                let weekEntries = this.entries.filter(e => e.minggu === weekNum).sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal));
-                let grouped = {};
-                weekEntries.forEach(e => {
-                    if(!grouped[e.tanggal]) grouped[e.tanggal] = { tanggal: e.tanggal, items: [], totalDurasi: 0 };
-                    grouped[e.tanggal].items.push(e);
-                    grouped[e.tanggal].totalDurasi += parseFloat(e.durasiTotal || 0);
-                });
-                return Object.values(grouped);
+            emptyActivity() {
+                return { jamMulai: '', jamSelesai: '', kegiatan: '', kode: 'SUP', waktu: 0 };
             },
 
-            getDaysFilled(weekNum) {
-                let weekEntries = this.entries.filter(e => e.minggu === weekNum);
-                let uniqueDates = new Set(weekEntries.map(e => e.tanggal));
-                return uniqueDates.size;
+            addActivity(day) {
+                day.activities.push(this.emptyActivity());
             },
 
-            isWeekComplete(weekNum) {
-                let target = this.weeksConfig.find(w => w.num === weekNum).target;
-                return this.getDaysFilled(weekNum) >= target;
+            removeActivity(day, index) {
+                day.activities.splice(index, 1);
             },
 
-            getTotalCompletedWeeks() {
-                return this.weeksConfig.filter(w => this.isWeekComplete(w.num)).length;
+            calcTime(act) {
+                if (act.jamMulai && act.jamSelesai) {
+                    let start = new Date(`1970-01-01T${act.jamMulai}:00`);
+                    let end = new Date(`1970-01-01T${act.jamSelesai}:00`);
+                    let diffMinutes = (end - start) / 1000 / 60; 
+                    
+                    if (diffMinutes < 0) diffMinutes += 24 * 60; // Antisipasi lewat tengah malam
+                    act.waktu = Math.round(diffMinutes);
+                } else {
+                    act.waktu = 0;
+                }
+            },
+
+            getDayTotalMinutes(day) {
+                if (day.status !== 'Kerja') return 0;
+                return day.activities.reduce((sum, act) => sum + (act.waktu || 0), 0);
+            },
+
+            getWeekTotalMinutes(week) {
+                return week.days.reduce((sum, day) => sum + this.getDayTotalMinutes(day), 0);
             },
 
             getTotalHours() {
-                return this.entries.reduce((total, entry) => total + parseFloat(entry.durasiTotal || 0), 0).toFixed(1);
+                let totalMinutes = 0;
+                this.weeks.forEach(week => {
+                    totalMinutes += this.getWeekTotalMinutes(week);
+                });
+                return (totalMinutes / 60).toFixed(1);
             },
 
-            getHoursByMatkul(matkulCode) {
-                return this.entries
-                    .filter(e => e.type === 'kerja' && e.matkul === matkulCode)
-                    .reduce((total, entry) => total + parseFloat(entry.durasiTotal), 0).toFixed(1);
+            getHoursByMatkul(kode) {
+                let totalMinutes = 0;
+                this.weeks.forEach(week => {
+                    week.days.forEach(day => {
+                        if (day.status === 'Kerja') {
+                            day.activities.forEach(act => {
+                                if (act.kode === kode) totalMinutes += (act.waktu || 0);
+                            });
+                        }
+                    });
+                });
+                return (totalMinutes / 60).toFixed(1);
             },
 
-            formatDate(dateString) {
-                if(!dateString) return '';
-                const options = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-                return new Date(dateString).toLocaleDateString('id-ID', options);
+            getTotalCompletedWeeks() {
+                // Asumsi: Minggu dianggap "dikerjakan" jika ada durasi menit > 0
+                return this.weeks.filter(week => this.getWeekTotalMinutes(week) > 0).length;
+            },
+
+            saveDay(weekId, dayName) {
+                alert(`Data Logbook untuk Minggu ${weekId} hari ${dayName} berhasil disimpan!`);
             }
         }
     }
