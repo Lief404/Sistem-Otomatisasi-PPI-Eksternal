@@ -237,18 +237,10 @@
             searchQuery: '',
             showModal: false,
             
-            companies: ['PT Solusi Intek Indonesia', 'PT Dirgantara Indonesia', 'PT Pindad', 'PT Bukaka Teknik'],
+            companies: {!! $companies ?? '[]' !!},
 
-            // DUMMY DATA AKUN DENGAN PRODI & KELAS (Khusus Mhs)
-            users: [
-                { id: 1, role: 'mahasiswa', name: 'Alief Muhammad S', identifier: 'NIM: 223443026', prodi: 'TRIN', kelas: '3 AEC-2', email: '223443026@mhs.polman', pt: 'PT Solusi Intek Indonesia' },
-                { id: 2, role: 'mahasiswa', name: 'Daffa Khairul Ammar', identifier: 'NIM: 223443025', prodi: 'TRO', kelas: '3 AEC-2', email: '223443025@mhs.polman', pt: 'PT Dirgantara Indonesia' },
-                { id: 3, role: 'dosen', name: 'Supriyadi, S.T., M.T.', identifier: 'NIP: 198001012005', email: 'supriyadi@dosen.polman', pt: null },
-                { id: 4, role: 'dosen', name: 'Ahmad Fakhri, S.T.', identifier: 'NIP: 198502022010', email: 'fakhri@dosen.polman', pt: null },
-                { id: 5, role: 'mentor', name: 'PT Bukaka Teknik', identifier: null, email: 'bukaka@industri.id', pt: 'PT Bukaka Teknik' },
-                { id: 6, role: 'mentor', name: 'PT Solusi Intek Indonesia', identifier: null, email: 'solusi@industri.id', pt: 'PT Solusi Intek Indonesia' },
-                { id: 7, role: 'admin', name: 'Super Administrator', identifier: null, email: 'admin@admin.polman', pt: null },
-            ],
+            // DATA AKUN DARI DATABASE
+            users: {!! $mappedUsers ?? '[]' !!},
 
             formUser: { name: '', identifier: '', prodi: '', kelas: '', pt: '', emailPrefix: '' },
 
@@ -291,36 +283,63 @@
                 return '@admin.polman'; 
             },
 
-            saveUser() {
-                let newId = this.users.length ? Math.max(...this.users.map(u => u.id)) + 1 : 1;
+            async saveUser() {
                 let fullEmail = this.formUser.emailPrefix + this.getEmailDomain();
                 
-                let idText = null;
-                if(this.activeRole === 'mahasiswa') idText = 'NIM: ' + this.formUser.identifier;
-                if(this.activeRole === 'dosen') idText = 'NIP: ' + this.formUser.identifier;
-
-                this.users.push({
-                    id: newId,
+                let payload = {
                     role: this.activeRole,
                     name: this.formUser.name,
-                    identifier: idText,
+                    email: fullEmail,
+                    identifier: this.formUser.identifier,
                     prodi: this.activeRole === 'mahasiswa' ? this.formUser.prodi : null,
                     kelas: this.activeRole === 'mahasiswa' ? this.formUser.kelas : null,
-                    email: fullEmail,
                     pt: (this.activeRole === 'mahasiswa' || this.activeRole === 'mentor') ? this.formUser.pt : null
-                });
+                };
 
-                if(this.formUser.pt && !this.companies.includes(this.formUser.pt)) {
-                    this.companies.push(this.formUser.pt);
+                try {
+                    let response = await fetch('{{ route("admin.users.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let result = await response.json();
+                    if (response.ok && result.success) {
+                        alert(`Akun ${this.activeRole} baru berhasil ditambahkan!`);
+                        window.location.reload(); // Refresh data to show changes
+                    } else {
+                        alert('Gagal menyimpan: ' + (result.message || 'Terjadi kesalahan'));
+                    }
+                } catch (error) {
+                    alert('Gagal menyimpan data.');
+                    console.error(error);
                 }
-
-                alert(`Akun ${this.activeRole} baru berhasil ditambahkan!`);
-                this.showModal = false;
             },
 
-            deleteUser(id) {
+            async deleteUser(id) {
                 if(confirm('Yakin ingin menghapus akun ini secara permanen?')) {
-                    this.users = this.users.filter(u => u.id !== id);
+                    try {
+                        let response = await fetch(`{{ url('/admin/users') }}/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        });
+
+                        let result = await response.json();
+                        if (response.ok && result.success) {
+                            this.users = this.users.filter(u => u.id !== id);
+                        } else {
+                            alert('Gagal menghapus: ' + (result.message || 'Terjadi kesalahan'));
+                        }
+                    } catch (error) {
+                        alert('Gagal menghapus data.');
+                        console.error(error);
+                    }
                 }
             }
         }

@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Mentor Industri')
 
 @section('content')
-<div x-data="mentorApp()" class="space-y-6">
+<div x-data="mentorApp({{ json_encode($mahasiswas ?? []) }})" class="space-y-6">
 
     <!-- Header Panel -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
@@ -273,31 +273,51 @@
 </div>
 
 <script>
-    function mentorApp() {
+    function mentorApp(serverStudents = []) {
         return {
             activeModal: null, // 'logbook', 'disiplin', 'kuisioner'
             selectedStudent: null,
             
-            // DUMMY DATA MAHASISWA
-            // dataLogbookStudent berisi array simulasi isi logbook harian mahasiswa.
-            students: [
-                { 
-                    id: 1, name: 'Alief Muhammad S', nim: '223443026', kelas: '3 AEC-2', status: 'Pending', 
-                    nilaiLogbook: Array(20).fill(null), // array untuk simpan nilai yang diinput mentor
-                    dataLogbookStudent: [
-                        { id: 101, minggu: 1, tanggal: '2026-08-03', matkul: 'PII', deskripsi: 'Setup server lokal menggunakan Laravel dan MySQL.', durasiTotal: '8.0' },
-                        { id: 102, minggu: 1, tanggal: '2026-08-04', matkul: 'SUP', deskripsi: 'Mengikuti meeting sprint planning mingguan dengan tim IT internal.', durasiTotal: '8.0' },
-                        { id: 103, minggu: 2, tanggal: '2026-08-10', matkul: 'LTD', deskripsi: 'Membuat rancangan ERD untuk proyek sistem penilaian.', durasiTotal: '8.0' }
-                    ],
-                    dataDisiplin: null, dataKuisioner: null 
-                },
-                { 
-                    id: 2, name: 'Daffa Khairul Ammar', nim: '223443025', kelas: '3 AEC-2', status: 'Pending', 
-                    nilaiLogbook: Array(20).fill(null), 
-                    dataLogbookStudent: [], // Kosong
-                    dataDisiplin: null, dataKuisioner: null 
+            students: [],
+
+            init() {
+                if (Array.isArray(serverStudents) && serverStudents.length > 0) {
+                    this.students = serverStudents.map(mhs => {
+                        let dataLogbookStudent = (mhs.logbooks || []).map(l => ({
+                            id: l.id_log,
+                            minggu: l.minggu_ke || 1,
+                            tanggal: l.tanggal,
+                            matkul: l.kd_mat,
+                            deskripsi: l.kegiatan,
+                            durasiTotal: ((l.durasi_mnt || 0) / 60).toFixed(1)
+                        }));
+                        return {
+                            id: mhs.id_mhs || mhs.nim,
+                            name: mhs.nama_mhs,
+                            nim: mhs.nim,
+                            kelas: mhs.kelas || '-',
+                            status: mhs.penilaians && mhs.penilaians.length > 0 ? 'Selesai' : 'Pending',
+                            nilaiLogbook: Array(20).fill(null),
+                            dataLogbookStudent: dataLogbookStudent,
+                            dataDisiplin: null, 
+                            dataKuisioner: null 
+                        };
+                    });
+                } else {
+                    this.students = [
+                        { 
+                            id: 1, name: 'Alief Muhammad S', nim: '223443026', kelas: '3 AEC-2', status: 'Pending', 
+                            nilaiLogbook: Array(20).fill(null),
+                            dataLogbookStudent: [
+                                { id: 101, minggu: 1, tanggal: '2026-08-03', matkul: 'PII', deskripsi: 'Setup server lokal menggunakan Laravel dan MySQL.', durasiTotal: '8.0' },
+                                { id: 102, minggu: 1, tanggal: '2026-08-04', matkul: 'SUP', deskripsi: 'Mengikuti meeting sprint planning mingguan dengan tim IT internal.', durasiTotal: '8.0' },
+                                { id: 103, minggu: 2, tanggal: '2026-08-10', matkul: 'LTD', deskripsi: 'Membuat rancangan ERD untuk proyek sistem penilaian.', durasiTotal: '8.0' }
+                            ],
+                            dataDisiplin: null, dataKuisioner: null 
+                        }
+                    ];
                 }
-            ],
+            },
 
             // State Form Modal
             formLogbook: Array(20).fill(null),

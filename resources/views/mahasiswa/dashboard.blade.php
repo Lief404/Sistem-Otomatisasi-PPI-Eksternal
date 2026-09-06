@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Inisialisasi Alpine.js -->
-<div x-data="logbookApp()" class="space-y-8 max-w-6xl mx-auto pb-16 font-sans">
+<div x-data="logbookApp({{ json_encode($logbooks ?? []) }}, '{{ $mahasiswa->nim ?? '' }}')" class="space-y-8 max-w-6xl mx-auto pb-16 font-sans">
     
     <!-- Header Panel -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-6 bg-white p-6 rounded-2xl shadow-[6px_6px_0_0_#1e3a8a] border-2">
@@ -71,9 +71,9 @@
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-4 md:mt-0 w-full md:w-auto" @click.stop>
                         <div class="flex items-center gap-3 bg-white p-2 rounded-lg border-2 border-gray-300 w-full sm:w-auto">
                             <span class="text-xs font-black text-gray-500 uppercase pl-2">Tanggal:</span>
-                            <input type="date" x-model="week.startDate" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
+                            <input type="date" x-model="week.startDate" @change="onWeekDateChange(week)" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
                             <span class="text-gray-300 font-bold">-</span>
-                            <input type="date" x-model="week.endDate" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
+                            <input type="date" x-model="week.endDate" @change="saveWeekDatesToStorage()" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
                         </div>
                         <div class="bg-white border-2 border-blue-900 p-2 rounded-lg text-blue-900 shadow-[2px_2px_0_0_#1e3a8a] group-hover:translate-y-px group-hover:translate-x-px group-hover:shadow-none transition-all hidden sm:block cursor-pointer">
                             <svg :class="week.expanded ? 'rotate-180' : ''" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
@@ -210,7 +210,7 @@
 
                                         <!-- TOMBOL SIMPAN HARIAN -->
                                         <div class="mt-6 pt-5 border-t-2 border-gray-200 flex justify-end">
-                                            <button @click="saveDay(week.id, day.name)" class="bg-green-500 text-white font-black py-2.5 px-8 rounded-lg border-2 border-green-900 shadow-[4px_4px_0_0_#064e3b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all duration-200 text-sm flex items-center gap-2">
+                                            <button @click="saveDay(week, day, dIndex)" class="bg-green-500 text-white font-black py-2.5 px-8 rounded-lg border-2 border-green-900 shadow-[4px_4px_0_0_#064e3b] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all duration-200 text-sm flex items-center gap-2">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                                                 Simpan Hari Ini
                                             </button>
@@ -231,32 +231,128 @@
 </div>
 
 <script>
-    function logbookApp() {
+    function logbookApp(existingLogbooks = [], nim = '') {
         return {
             weeks: [],
+            currentNim: nim,
+
+            addDays(dateStr, days) {
+                if (!dateStr) return '';
+                let parts = dateStr.split('-');
+                if (parts.length !== 3) return '';
+                let dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                dt.setDate(dt.getDate() + days);
+                let y = dt.getFullYear();
+                let m = String(dt.getMonth() + 1).padStart(2, '0');
+                let day = String(dt.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            },
+
+            saveWeekDatesToStorage() {
+                if (!this.currentNim) return;
+                let dates = {};
+                this.weeks.forEach(w => {
+                    if (w.startDate || w.endDate) {
+                        dates[w.id] = { startDate: w.startDate, endDate: w.endDate };
+                    }
+                });
+                try {
+                    localStorage.setItem('logbook_week_dates_' + this.currentNim, JSON.stringify(dates));
+                } catch(e) {}
+            },
+
+            onWeekDateChange(week) {
+                if (week.startDate) {
+                    week.endDate = this.addDays(week.startDate, 4);
+                }
+                this.saveWeekDatesToStorage();
+            },
             
             init() {
-                // Inisialisasi struktur data 20 minggu (Senin-Jumat)
                 const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
                 
+                let savedWeekDates = {};
+                if (this.currentNim) {
+                    try {
+                        savedWeekDates = JSON.parse(localStorage.getItem('logbook_week_dates_' + this.currentNim) || '{}');
+                    } catch(e) {}
+                }
+
+                // Group logbook entries by date (YYYY-MM-DD) and by minggu_ke
+                const logbooksByDate = {};
+                const weekStartFromLogbook = {};
+
+                if (Array.isArray(existingLogbooks)) {
+                    existingLogbooks.forEach(item => {
+                        if (item.tanggal) {
+                            if (!logbooksByDate[item.tanggal]) {
+                                logbooksByDate[item.tanggal] = [];
+                            }
+                            logbooksByDate[item.tanggal].push(item);
+
+                            if (item.minggu_ke) {
+                                if (!weekStartFromLogbook[item.minggu_ke] || item.tanggal < weekStartFromLogbook[item.minggu_ke]) {
+                                    weekStartFromLogbook[item.minggu_ke] = item.tanggal;
+                                }
+                            }
+                        }
+                    });
+                }
+
                 for (let i = 1; i <= 20; i++) {
+                    let weekStartDate = savedWeekDates[i]?.startDate || weekStartFromLogbook[i] || '';
+                    let weekEndDate = savedWeekDates[i]?.endDate || (weekStartDate ? this.addDays(weekStartDate, 4) : '');
+
                     let daysArr = [];
-                    for(let d = 0; d < 5; d++) {
+                    for (let d = 0; d < 5; d++) {
+                        let dayDateStr = weekStartDate ? this.addDays(weekStartDate, d) : '';
+                        let dayStatus = 'Kerja';
+                        let dayNotes = '';
+                        let dayActivities = [];
+
+                        if (dayDateStr && logbooksByDate[dayDateStr]) {
+                            let entries = logbooksByDate[dayDateStr];
+                            if (entries.length > 0) {
+                                dayStatus = entries[0].status || 'Kerja';
+                                if (dayStatus !== 'Kerja') {
+                                    dayNotes = entries[0].kegiatan || '';
+                                } else {
+                                    entries.forEach(e => {
+                                        if ((e.durasi_mnt && e.durasi_mnt > 0) || e.kegiatan) {
+                                            dayActivities.push({
+                                                jamMulai: e.jam_mulai || '',
+                                                jamSelesai: e.jam_selesai || '',
+                                                kegiatan: e.kegiatan || '',
+                                                kode: e.kd_mat || 'SUP',
+                                                waktu: e.durasi_mnt || 0
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        }
+
+                        if (dayActivities.length === 0) {
+                            dayActivities.push(this.emptyActivity());
+                        }
+
                         daysArr.push({
                             id: d,
                             name: dayNames[d],
-                            status: 'Kerja', // Default: Kerja
-                            notes: '',
+                            status: dayStatus,
+                            notes: dayNotes,
                             expanded: false,
-                            activities: [this.emptyActivity()]
+                            activities: dayActivities
                         });
                     }
 
+                    let hasData = daysArr.some(day => day.status !== 'Kerja' || (day.notes && day.notes.trim() !== '') || day.activities.some(a => a.waktu > 0 || (a.kegiatan && a.kegiatan.trim() !== '')));
+
                     this.weeks.push({
                         id: i,
-                        expanded: i === 1, // Buka minggu ke-1 secara otomatis
-                        startDate: '',
-                        endDate: '',
+                        expanded: i === 1 || hasData,
+                        startDate: weekStartDate,
+                        endDate: weekEndDate,
                         days: daysArr
                     });
                 }
@@ -280,7 +376,7 @@
                     let end = new Date(`1970-01-01T${act.jamSelesai}:00`);
                     let diffMinutes = (end - start) / 1000 / 60; 
                     
-                    if (diffMinutes < 0) diffMinutes += 24 * 60; // Antisipasi lewat tengah malam
+                    if (diffMinutes < 0) diffMinutes += 24 * 60;
                     act.waktu = Math.round(diffMinutes);
                 } else {
                     act.waktu = 0;
@@ -319,12 +415,69 @@
             },
 
             getTotalCompletedWeeks() {
-                // Asumsi: Minggu dianggap "dikerjakan" jika ada durasi menit > 0
                 return this.weeks.filter(week => this.getWeekTotalMinutes(week) > 0).length;
             },
 
-            saveDay(weekId, dayName) {
-                alert(`Data Logbook untuk Minggu ${weekId} hari ${dayName} berhasil disimpan!`);
+            async saveDay(week, day, dIndex) {
+                if (!week.startDate) {
+                    alert('Mohon isi tanggal mulai minggu terlebih dahulu (Tanggal di header minggu).');
+                    return;
+                }
+
+                let formattedDate = this.addDays(week.startDate, dIndex);
+                if (!formattedDate) {
+                    alert('Format tanggal mulai minggu tidak valid.');
+                    return;
+                }
+
+                let payload = {
+                    tanggal: formattedDate,
+                    status: day.status,
+                    kegiatan: day.notes,
+                    minggu_ke: week.id,
+                    activities: day.status === 'Kerja' ? day.activities.map(a => ({
+                        kode: a.kode,
+                        kegiatan: a.kegiatan || '-',
+                        waktu: a.waktu,
+                        jamMulai: a.jamMulai,
+                        jamSelesai: a.jamSelesai
+                    })) : []
+                };
+
+                try {
+                    let response = await fetch('{{ route("mahasiswa.logbook.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let result;
+                    try {
+                        result = await response.json();
+                    } catch (e) {
+                        alert('Gagal menyimpan: Server mengembalikan respons tidak terduga (kode ' + response.status + '). Coba refresh halaman.');
+                        return;
+                    }
+
+                    if (response.ok) {
+                        this.saveWeekDatesToStorage();
+                        alert(`Data Logbook untuk Minggu ke-${week.id} hari ${day.name} (${formattedDate}) berhasil disimpan!`);
+                    } else {
+                        let errMsg = result.message || 'Terjadi kesalahan';
+                        if (result.errors) {
+                            errMsg += ': ' + Object.values(result.errors).flat().join(', ');
+                        }
+                        alert('Gagal menyimpan: ' + errMsg);
+                        console.error(result);
+                    }
+                } catch (error) {
+                    alert('Gagal menyimpan data: ' + error.message);
+                    console.error(error);
+                }
             }
         }
     }
