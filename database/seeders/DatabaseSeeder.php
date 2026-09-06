@@ -65,7 +65,7 @@ class DatabaseSeeder extends Seeder
             'perusahaan' => 'PT Bukaka Teknik'
         ]);
 
-        // Akun Mahasiswa
+        // Akun Mahasiswa 1
         $userMhs = User::create([
             'name' => 'Mahasiswa PPI',
             'email' => '223443026@mhs.polman',
@@ -82,21 +82,63 @@ class DatabaseSeeder extends Seeder
             'id_pem' => $mentor->id_pem
         ]);
 
+        // Akun Mahasiswa 2
+        $userMhs2 = User::create([
+            'name' => 'Budi Santoso (Mhs)',
+            'email' => '223443027@mhs.polman',
+            'password' => Hash::make('password'),
+            'role' => 'mahasiswa',
+        ]);
+        $mahasiswa2 = Mahasiswa::create([
+            'nim' => '223443027',
+            'user_id' => $userMhs2->id,
+            'nama_mhs' => 'Budi Santoso',
+            'kelas' => 'AE-3B',
+            'id_prodi' => $prodi3->id_prodi,
+            'nidn' => $dosen->nidn,
+            'id_pem' => $mentor->id_pem
+        ]);
+
+        // Akun Mahasiswa 3
+        $userMhs3 = User::create([
+            'name' => 'Rina Melati',
+            'email' => '223443028@mhs.polman',
+            'password' => Hash::make('password'),
+            'role' => 'mahasiswa',
+        ]);
+        $mahasiswa3 = Mahasiswa::create([
+            'nim' => '223443028',
+            'user_id' => $userMhs3->id,
+            'nama_mhs' => 'Rina Melati',
+            'kelas' => 'AE-3A',
+            'id_prodi' => $prodi2->id_prodi,
+            'nidn' => $dosen->nidn,
+            'id_pem' => $mentor->id_pem
+        ]);
+
         // 4. Dummy Logbook
         Logbook::create([
             'nim' => $mahasiswa->nim,
             'kd_mat' => $mkPii->kd_mat,
-            'tanggal' => Carbon::now()->subDays(2),
+            'tanggal' => Carbon::now()->subDays(2)->format('Y-m-d'),
             'durasi_mnt' => 480,
             'kegiatan' => 'Melakukan perakitan mesin CNC',
+            'status' => 'Kerja',
+            'jam_mulai' => '08:00',
+            'jam_selesai' => '16:00',
+            'minggu_ke' => 1
         ]);
 
         Logbook::create([
             'nim' => $mahasiswa->nim,
             'kd_mat' => $mkSup->kd_mat,
-            'tanggal' => Carbon::now()->subDay(),
+            'tanggal' => Carbon::now()->subDay()->format('Y-m-d'),
             'durasi_mnt' => 480,
             'kegiatan' => 'Troubleshooting sensor jarak',
+            'status' => 'Kerja',
+            'jam_mulai' => '08:00',
+            'jam_selesai' => '16:00',
+            'minggu_ke' => 1
         ]);
 
         // 5. Dummy Penilaian (Satu dari dosen, satu dari mentor)

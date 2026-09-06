@@ -30,6 +30,7 @@
     // Group Route untuk Dosen
     Route::middleware(['auth', 'role:dosen'])->group(function () {
         Route::get('/dosen/dashboard', [DosenController::class, 'index'])->name('dosen.dashboard');
+        Route::post('/dosen/penilaian', [DosenController::class, 'storePenilaian'])->name('dosen.penilaian.store');
     });
 
     // Group Route untuk Mentor

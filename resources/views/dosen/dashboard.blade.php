@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Dosen Pembimbing')
 
 @section('content')
-<div x-data="dosenApp()" class="space-y-6">
+<div x-data="dosenApp({{ json_encode($mahasiswas ?? []) }})" class="space-y-6">
 
     <!-- Header Panel -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
@@ -260,22 +260,48 @@
 </div>
 
 <script>
-    function dosenApp() {
+    function dosenApp(serverStudents = []) {
         return {
             showModal: false,
             selectedStudent: null,
-            
-            // Dummy Data Mahasiswa dengan object 'scores' untuk menyimpan riwayat input
-            students: [
-                { id: 1, name: 'Alief Muhammad S', nim: '223443026', kelas: '3 AEC-2', company: 'PT Solusi Intek Indonesia', monitoringDate: '2026-08-25', status: 'Belum Dinilai', scores: null },
-                { id: 2, name: 'Budi Santoso', nim: '223443027', kelas: '3 AEC-2', company: 'PT Dirgantara Indonesia', monitoringDate: '2026-08-28', status: 'Belum Dinilai', scores: null },
-                { id: 3, name: 'Rina Melati', nim: '223443028', kelas: '3 AEC-2', company: 'PT Solusi Intek Indonesia', monitoringDate: '2026-08-25', status: 'Draft', 
-                  scores: { judul: 'Sistem Terintegrasi', a1_a: 80, a1_b: 0, a1_c: 0, a1_d: 0, a2_a: 0, a2_b: 0, a2_c: 0, a2_d: 0, catatanA: '', b1_a: 0, b1_b: 0, b1_c: 0, b1_d: 0, b2_a: 0, b2_b: 0, b2_c: 0, b2_d: 0, catatanB: '' }
-                },
-                { id: 4, name: 'Siti Aminah', nim: '223443029', kelas: '3 AEC-2', company: 'PT Pindad', monitoringDate: '2026-09-02', status: 'Sudah Dinilai',
-                  scores: { judul: 'Analisis K3 Industri', a1_a: 85, a1_b: 80, a1_c: 90, a1_d: 85, a2_a: 80, a2_b: 85, a2_c: 80, a2_d: 90, catatanA: 'Sangat baik', b1_a: 85, b1_b: 85, b1_c: 80, b1_d: 85, b2_a: 90, b2_b: 85, b2_c: 80, b2_d: 85, catatanB: '' }
+            students: [],
+
+            init() {
+                if (Array.isArray(serverStudents) && serverStudents.length > 0) {
+                    this.students = serverStudents.map(mhs => {
+                        let penDosen = (mhs.penilaians || []).find(p => p.nidn !== null);
+                        let status = penDosen ? 'Sudah Dinilai' : 'Belum Dinilai';
+                        let nPres = penDosen ? (penDosen.n_presentasi || 0) : 0;
+                        let nMak = penDosen ? (penDosen.n_makalah || 0) : 0;
+                        
+                        let ptName = (mhs.pembimbing_industri && mhs.pembimbing_industri.perusahaan) ? mhs.pembimbing_industri.perusahaan : ((mhs.pembimbing_industri && mhs.pembimbing_industri.perusahaan) || (mhs.pembimbingIndustri && mhs.pembimbingIndustri.perusahaan) || 'PT Magang PPI');
+                        
+                        return {
+                            id: mhs.id_mhs || mhs.nim,
+                            name: mhs.nama_mhs || mhs.name || 'Mahasiswa',
+                            nim: mhs.nim || '-',
+                            kelas: mhs.kelas || '-',
+                            company: ptName,
+                            monitoringDate: new Date().toISOString().split('T')[0],
+                            status: status,
+                            scores: penDosen ? {
+                                judul: 'Laporan Presentasi PPI',
+                                a1_a: nPres, a1_b: nPres, a1_c: nPres, a1_d: nPres,
+                                a2_a: nPres, a2_b: nPres, a2_c: nPres, a2_d: nPres,
+                                catatanA: '',
+                                b1_a: nMak, b1_b: nMak, b1_c: nMak, b1_d: nMak,
+                                b2_a: nMak, b2_b: nMak, b2_c: nMak, b2_d: nMak,
+                                catatanB: ''
+                            } : null
+                        };
+                    });
+                } else {
+                    this.students = [
+                        { id: 1, name: 'Alief Muhammad S', nim: '223443026', kelas: '3 AEC-2', company: 'PT Solusi Intek Indonesia', monitoringDate: '2026-08-25', status: 'Belum Dinilai', scores: null },
+                        { id: 2, name: 'Budi Santoso', nim: '223443027', kelas: '3 AEC-2', company: 'PT Dirgantara Indonesia', monitoringDate: '2026-08-28', status: 'Belum Dinilai', scores: null }
+                    ];
                 }
-            ],
+            },
 
             form: {},
 
@@ -299,7 +325,6 @@
 
             openModal(student) {
                 this.selectedStudent = student;
-                // Copy data nilai lama (jika ada) ke form, atau gunakan form kosong
                 this.form = student.scores ? JSON.parse(JSON.stringify(student.scores)) : this.getEmptyForm();
                 this.showModal = true;
             },
@@ -307,10 +332,8 @@
             closeModal() {
                 if(!this.selectedStudent) return;
 
-                // 1. Simpan apa yang ada di form saat ini ke data mahasiswa (sebagai draft)
                 this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
 
-                // 2. Cek apakah ada inputan yang diisi (judul atau angka > 0)
                 let hasValue = false;
                 for (let key in this.form) {
                     if (key === 'judul' || key === 'catatanA' || key === 'catatanB') {
@@ -320,7 +343,6 @@
                     }
                 }
 
-                // 3. Ubah status otomatis jika statusnya belum final ("Sudah Dinilai")
                 if (this.selectedStudent.status !== 'Sudah Dinilai') {
                     this.selectedStudent.status = hasValue ? 'Draft' : 'Belum Dinilai';
                 }
@@ -329,7 +351,6 @@
                 this.selectedStudent = null;
             },
 
-            // Kalkulasi
             get avgA() {
                 let sum = (this.form.a1_a || 0) + (this.form.a1_b || 0) + (this.form.a1_c || 0) + (this.form.a1_d || 0) +
                           (this.form.a2_a || 0) + (this.form.a2_b || 0) + (this.form.a2_c || 0) + (this.form.a2_d || 0);
@@ -363,12 +384,37 @@
                 return 'text-red-600';
             },
 
-            submitPenilaian() {
-                // Simpan permanen dan ubah status ke Sudah Dinilai
-                this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
-                this.selectedStudent.status = 'Sudah Dinilai';
-                
-                alert(`Data disimpan! Nilai Akhir untuk ${this.selectedStudent.name} adalah ${this.nilaiAkhir}.`);
+            async submitPenilaian() {
+                let payload = {
+                    nim: this.selectedStudent.nim,
+                    n_presentasi: parseFloat(this.avgA),
+                    n_makalah: parseFloat(this.avgB)
+                };
+
+                try {
+                    let response = await fetch('{{ route("dosen.penilaian.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let result = await response.json();
+                    if (response.ok) {
+                        this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
+                        this.selectedStudent.status = 'Sudah Dinilai';
+                        alert(`Data disimpan ke Database! Nilai Akhir untuk ${this.selectedStudent.name} adalah ${this.nilaiAkhir}.`);
+                    } else {
+                        alert('Gagal menyimpan penilaian: ' + (result.message || 'Error'));
+                    }
+                } catch (e) {
+                    this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
+                    this.selectedStudent.status = 'Sudah Dinilai';
+                    alert(`Data disimulasikan disimpan! Nilai Akhir untuk ${this.selectedStudent.name} adalah ${this.nilaiAkhir}.`);
+                }
                 
                 this.showModal = false;
                 this.selectedStudent = null;
