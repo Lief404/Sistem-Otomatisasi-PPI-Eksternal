@@ -28,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'username' => ['required', 'string'], // Diubah dari email menjadi username
             'password' => ['required', 'string'],
         ];
     }
@@ -42,51 +42,32 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // 1. Ambil input email dan expected_role dari form (URL / pop-up)
-        $email = $this->input('email');
         $expectedRole = $this->input('expected_role');
 
-        // 2. Ekstrak domain dari email (mengambil teks setelah '@')
-        $domain = substr(strrchr($email, "@"), 1);
-
-        // 3. Daftarkan domain yang valid beserta role pasangannya
-        $validDomains = [
-            'mhs.polman' => 'mahasiswa',
-            'dosen.polman' => 'dosen',
-            'industri.id' => 'mentor',
-            'admin.polman' => 'admin'
-        ];
-
-        // LOGIKA FILTER A: Jika domain ngawur / tidak terdaftar
-        if (!array_key_exists($domain, $validDomains)) {
-            throw ValidationException::withMessages([
-                // Admin tidak disebutkan demi keamanan / rahasia sistem
-                'email' => 'Silahkan login menggunakan akun mahasiswa, dosen, atau mentor.',
-            ]);
-        }
-
-        // LOGIKA FILTER B: Cek kecocokan pintu masuk (expected) dengan role asli
-        $actualRole = $validDomains[$domain];
-        
-        // Jika user masuk lewat pop-up khusus (ada parameter expectedRole) dan role aslinya beda
-        if ($expectedRole && $expectedRole !== $actualRole) {
-            
-            // Pengecualian: Biarkan admin bebas masuk dari pintu mana saja secara diam-diam.
-            // Namun, jika bukan admin yang nyasar, tolak!
-            if ($actualRole !== 'admin') {
-                throw ValidationException::withMessages([
-                    'email' => 'Silahkan login menggunakan akun ' . $expectedRole . '!',
-                ]);
-            }
-        }
-
-        // Lanjutkan ke proses Autentikasi bawaan Laravel
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // Lakukan Autentikasi dengan USERNAME dan PASSWORD
+        if (! Auth::attempt($this->only('username', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'username' => 'Username atau Password salah.',
             ]);
+        }
+
+        // Jika berhasil login, cek Role-nya
+        $user = Auth::user();
+
+        // LOGIKA FILTER: Cek kecocokan pintu masuk (expected) dengan role asli di DB
+        if ($expectedRole && $expectedRole !== $user->role) {
+            
+            // Pengecualian: Admin bebas masuk dari pintu mana saja
+            if ($user->role !== 'admin') {
+                
+                Auth::logout(); // Keluarkan kembali karena salah pintu
+                
+                throw ValidationException::withMessages([
+                    'username' => 'Akses ditolak! Silahkan login melalui portal khusus ' . ucfirst($user->role) . '.',
+                ]);
+            }
         }
 
         RateLimiter::clear($this->throttleKey());
@@ -108,7 +89,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'username' => trans('auth.throttle', [ // Ubah ke username
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -120,6 +101,7 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        // Ubah dari email menjadi username
+        return Str::transliterate(Str::lower($this->string('username')).'|'.$this->ip());
     }
 }

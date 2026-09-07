@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id(); // Primary Key letakkan paling atas
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('username')->unique(); // Kolom baru untuk login (NIM/NIP/Nama PT)
+            $table->string('email')->nullable()->unique(); // Diubah menjadi nullable agar import Excel tidak gagal jika email kosong
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             // Tambahkan kolom role di sini, misalnya setelah password
-            $table->enum('role', ['admin', 'mahasiswa', 'dosen', 'mentor', 'kaprodi'])->default('mahasiswa');
+            $table->enum('role', ['admin', 'mahasiswa', 'dosen', 'mentor'])->default('mahasiswa');
             $table->rememberToken();
             $table->timestamps();
         });

@@ -8,38 +8,20 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed the application's database.
+     */
     public function run(): void
     {
-        // Akun Admin
+        // Membuat Akun Admin Default
         User::create([
-            'name' => 'Administrator',
-            'email' => 'admin@admin.polman',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
+            'name'     => 'Super Administrator',
+            'username' => 'admin', // Bisa login pakai username 'admin'
+            'email'    => 'admin@admin', // Atau login pakai email ini
+            'password' => Hash::make('admin123'),
+            'role'     => 'admin',
         ]);
-
-        // Akun Mahasiswa
-        User::create([
-            'name' => 'Mahasiswa PPI',
-            'email' => '223443026@mhs.polman', // Format NIM
-            'password' => Hash::make('password'),
-            'role' => 'mahasiswa',
-        ]);
-
-        // Akun Dosen
-        User::create([
-            'name' => 'Supriyadi',
-            'email' => 'supriyadi@dosen.polman', // Format Nama Dosen
-            'password' => Hash::make('password'),
-            'role' => 'dosen',
-        ]);
-
-        // Akun Mentor Industri
-        User::create([
-            'name' => 'PT Bukaka Teknik',
-            'email' => 'bukaka@industri.id', // Format Industri
-            'password' => Hash::make('password'),
-            'role' => 'mentor',
-        ]);
+        
+        // (Opsional) Anda juga bisa menambahkan dummy akun mahasiswa di sini nantinya
     }
 }
