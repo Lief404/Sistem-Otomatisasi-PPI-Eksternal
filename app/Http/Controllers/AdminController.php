@@ -7,38 +7,90 @@ use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\PembimbingIndustri;
 use App\Models\ProgramStudi;
+use App\Models\Perusahaan;
+use App\Models\MataKuliah;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Models\JadwalMonitoring;
 
 class AdminController extends Controller
 {
     public function index() {
-        return view('admin.dashboard');
+        $dosens = Dosen::all();
+        $perusahaans = Perusahaan::all();
+        $prodis = ProgramStudi::with('mataKuliahs')->get();
+        $mentors = PembimbingIndustri::all();
+        $mahasiswas = Mahasiswa::with(['programStudi', 'pembimbingIndustri'])->get();
+        $jadwals = JadwalMonitoring::all();
+        return view('admin.dashboard', compact('dosens', 'perusahaans', 'prodis', 'mentors', 'mahasiswas', 'jadwals'));
+    }
+
+    public function storeMatkul(Request $request)
+    {
+        $request->validate([
+            'id_prodi' => 'required|exists:program_studis,id_prodi',
+            'kd_mat' => 'required|string',
+            'nama_komp' => 'required|string',
+            'jam_min' => 'required|numeric',
+        ]);
+
+        MataKuliah::create($request->all());
+
+        return response()->json(['message' => 'Mata Kuliah berhasil ditambahkan']);
+    }
+
+    public function updateMatkul(Request $request, $id)
+    {
+        $request->validate([
+            'kd_mat' => 'required|string',
+            'nama_komp' => 'required|string',
+            'jam_min' => 'required|numeric',
+        ]);
+
+        $matkul = MataKuliah::findOrFail($id);
+        $matkul->update($request->only(['kd_mat', 'nama_komp', 'jam_min']));
+
+        return response()->json(['message' => 'Mata Kuliah berhasil diperbarui']);
+    }
+
+    public function deleteMatkul($id)
+    {
+        $matkul = MataKuliah::findOrFail($id);
+        $matkul->delete();
+
+        return response()->json(['message' => 'Mata Kuliah berhasil dihapus']);
     }
 
     public function users() {
-        $users = User::with(['mahasiswa.programStudi', 'mahasiswa.pembimbingIndustri', 'dosen', 'pembimbingIndustri'])->get();
+        $users = User::with(['mahasiswa.programStudi', 'mahasiswa.dosen', 'mahasiswa.pembimbingIndustri', 'dosen', 'pembimbingIndustri'])->get();
         
         $mappedUsers = $users->map(function ($user) {
             $identifier = null;
             $prodi = null;
             $kelas = null;
             $pt = null;
+            $nim = null;
+            $nidn = null;
+            $id_pem = null;
+            $dosen_name = null;
+            $mentor_name = null;
             
             if ($user->role === 'mahasiswa' && $user->mahasiswa) {
-                $identifier = 'NIM: ' . $user->mahasiswa->nim;
-                // Asumsi nama prodi seperti "Teknik Informatika" diubah jadi singkatan TRIN, dsb.
-                // Tapi kita bisa mengirimkan nama aslinya atau ID-nya. 
-                // Di frontend ada TRIN, TRO, TRMO. Kita cocokkan:
+                $nim = $user->mahasiswa->nim;
+                $identifier = 'NIM: ' . $nim;
                 $prodiName = $user->mahasiswa->programStudi->nama_prodi ?? '';
                 if (stripos($prodiName, 'Mekatronika') !== false) {
                     $prodi = 'TRMO';
                 } elseif (stripos($prodiName, 'Manufaktur') !== false && stripos($prodiName, 'Perancangan') !== false) {
-                    $prodi = 'TRIN'; // Placeholder untuk TRIN/TRPM di frontend dummy
+                    $prodi = 'TRIN';
                 } else {
-                    $prodi = 'TRO'; // Placeholder lainnya
+                    $prodi = 'TRO';
                 }
                 $kelas = $user->mahasiswa->kelas;
+                $nidn = $user->mahasiswa->nidn;
+                $id_pem = $user->mahasiswa->id_pem;
+                $dosen_name = $user->mahasiswa->dosen->nama_dosen ?? null;
+                $mentor_name = $user->mahasiswa->pembimbingIndustri->nama_pem ?? null;
                 $pt = $user->mahasiswa->pembimbingIndustri->perusahaan ?? null;
             } elseif ($user->role === 'dosen' && $user->dosen) {
                 $identifier = 'NIP: ' . $user->dosen->nidn;
@@ -51,19 +103,34 @@ class AdminController extends Controller
                 'role' => $user->role,
                 'name' => $user->name,
                 'identifier' => $identifier,
+                'nim' => $nim,
                 'prodi' => $prodi,
                 'kelas' => $kelas,
                 'email' => $user->email,
-                'pt' => $pt
+                'pt' => $pt,
+                'nidn' => $nidn,
+                'id_pem' => $id_pem,
+                'dosen_name' => $dosen_name,
+                'mentor_name' => $mentor_name,
             ];
         });
 
-        // Ambil daftar PT dari tabel pembimbing_industris unik
-        $companies = PembimbingIndustri::pluck('perusahaan')->unique()->values()->all();
+        // Ambil data perusahaan dari tabel perusahaans & pembimbing_industris
+        $perusahaanList = Perusahaan::all();
+        $companiesFromDb = $perusahaanList->pluck('nama_perusahaan')->toArray();
+        $companiesFromMentor = PembimbingIndustri::pluck('perusahaan')->unique()->toArray();
+        $companies = array_values(array_unique(array_filter(array_merge($companiesFromDb, $companiesFromMentor))));
+
+        // Ambil data Dosen & Mentor untuk pilihan pembimbing
+        $dosens = Dosen::all(['nidn', 'nama_dosen']);
+        $mentors = PembimbingIndustri::all(['id_pem', 'nama_pem', 'perusahaan']);
 
         return view('admin.users', [
             'mappedUsers' => json_encode($mappedUsers),
-            'companies' => json_encode($companies)
+            'companies' => json_encode($companies),
+            'perusahaans' => json_encode($perusahaanList),
+            'dosens' => json_encode($dosens),
+            'mentors' => json_encode($mentors),
         ]);
     }
 
@@ -73,7 +140,6 @@ class AdminController extends Controller
             'role' => 'required|in:admin,mahasiswa,dosen,mentor',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            // fields specific to roles
         ]);
 
         DB::beginTransaction();
@@ -88,7 +154,6 @@ class AdminController extends Controller
 
             // 2. Create Profile based on Role
             if ($request->role === 'mahasiswa') {
-                // Find prodi
                 $prodiMap = [
                     'TRIN' => 'Teknik Rekayasa Perancangan Manufaktur',
                     'TRO' => 'Teknik Manufaktur',
@@ -97,14 +162,18 @@ class AdminController extends Controller
                 $namaProdi = $prodiMap[$request->prodi] ?? 'Teknik Manufaktur';
                 $prodi = ProgramStudi::firstOrCreate(['nama_prodi' => $namaProdi]);
 
-                // Create Mahasiswa
+                if ($request->pt) {
+                    Perusahaan::firstOrCreate(['nama_perusahaan' => $request->pt]);
+                }
+
                 Mahasiswa::create([
                     'nim' => $request->identifier,
                     'user_id' => $user->id,
                     'nama_mhs' => $request->name,
                     'kelas' => $request->kelas,
                     'id_prodi' => $prodi->id_prodi,
-                    // nidn dan id_pem dibiarkan null dulu
+                    'nidn' => $request->nidn ?: null,
+                    'id_pem' => $request->id_pem ?: null,
                 ]);
             } elseif ($request->role === 'dosen') {
                 Dosen::create([
@@ -113,18 +182,24 @@ class AdminController extends Controller
                     'nama_dosen' => $request->name,
                 ]);
             } elseif ($request->role === 'mentor') {
+                if ($request->pt) {
+                    Perusahaan::firstOrCreate(['nama_perusahaan' => $request->pt]);
+                }
+
                 PembimbingIndustri::create([
                     'user_id' => $user->id,
                     'nama_pem' => $request->name,
                     'perusahaan' => $request->pt,
                 ]);
+            } elseif ($request->role === 'kaprodi') {
+                // Kaprodi just needs a user account for now
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'User berhasil ditambahkan']);
+            return response()->json(['message' => 'Akun ' . ucfirst($request->role) . ' berhasil ditambahkan']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Gagal menambahkan user: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Gagal menambahkan akun: ' . $e->getMessage()], 500);
         }
     }
 
@@ -132,8 +207,6 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
         
-        // Since migrations have cascadeOnDelete for user_id (usually), 
-        // deleting user might automatically delete profiles, but to be safe:
         if ($user->role === 'mahasiswa') {
             Mahasiswa::where('user_id', $user->id)->delete();
         } elseif ($user->role === 'dosen') {
@@ -145,5 +218,99 @@ class AdminController extends Controller
         $user->delete();
 
         return response()->json(['success' => true, 'message' => 'User berhasil dihapus']);
+    }
+
+    public function storePerusahaan(Request $request)
+    {
+        $request->validate([
+            'nama_perusahaan' => 'required|string|max:255|unique:perusahaans,nama_perusahaan',
+            'alamat' => 'nullable|string',
+            'kontak' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $perusahaan = Perusahaan::create([
+                'nama_perusahaan' => $request->nama_perusahaan,
+                'alamat' => $request->alamat,
+                'kontak' => $request->kontak,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Perusahaan berhasil ditambahkan', 'data' => $perusahaan]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menambahkan perusahaan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function destroyPerusahaan($id)
+    {
+        try {
+            $perusahaan = Perusahaan::findOrFail($id);
+            $perusahaan->delete();
+
+            return response()->json(['success' => true, 'message' => 'Perusahaan berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus perusahaan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function assignPembimbing(Request $request)
+    {
+        $request->validate([
+            'nim' => 'required|exists:mahasiswas,nim',
+            'nidn' => 'nullable|exists:dosens,nidn',
+            'id_pem' => 'nullable|exists:pembimbing_industris,id_pem',
+        ]);
+
+        try {
+            $mahasiswa = Mahasiswa::where('nim', $request->nim)->firstOrFail();
+            $mahasiswa->nidn = $request->nidn ?: null;
+            $mahasiswa->id_pem = $request->id_pem ?: null;
+            $mahasiswa->save();
+
+            $dosen = $mahasiswa->dosen;
+            $mentor = $mahasiswa->pembimbingIndustri;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembimbing berhasil diperbarui',
+                'dosen_name' => $dosen ? $dosen->nama_dosen : null,
+                'mentor_name' => $mentor ? $mentor->nama_pem : null,
+                'pt' => $mentor ? $mentor->perusahaan : null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal memperbarui pembimbing: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function storeJadwal(Request $request)
+    {
+        $request->validate([
+            'nidn' => 'required|exists:dosens,nidn',
+            'perusahaan' => 'required|exists:perusahaans,nama_perusahaan',
+            'tanggal' => 'required|date',
+        ]);
+
+        try {
+            $jadwal = JadwalMonitoring::create([
+                'nidn' => $request->nidn,
+                'perusahaan' => $request->perusahaan,
+                'tanggal' => $request->tanggal,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Jadwal berhasil ditambahkan', 'data' => $jadwal]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menambahkan jadwal: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function destroyJadwal($id)
+    {
+        try {
+            $jadwal = JadwalMonitoring::findOrFail($id);
+            $jadwal->delete();
+            return response()->json(['success' => true, 'message' => 'Jadwal berhasil dihapus']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus jadwal: ' . $e->getMessage()], 500);
+        }
     }
 }

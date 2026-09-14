@@ -15,20 +15,23 @@ class DosenController extends Controller
         $user = Auth::user();
         $dosen = Dosen::where('user_id', $user->id)->first();
         
+        $jadwals = collect();
+
         if ($dosen) {
+            // Hanya tampilkan mahasiswa yang sudah ditugaskan oleh admin (nidn sesuai)
             $mahasiswas = Mahasiswa::with(['programStudi', 'pembimbingIndustri', 'penilaians'])
                 ->where('nidn', $dosen->nidn)
+                ->get();
+            
+            // Ambil jadwal penugasan dari admin
+            $jadwals = \App\Models\JadwalMonitoring::where('nidn', $dosen->nidn)
+                ->orderBy('tanggal', 'asc')
                 ->get();
         } else {
             $mahasiswas = collect();
         }
 
-        // Jika tidak ada mahasiswa yang terasosiasi spesifik dengan NIDN ini, tampilkan semua mahasiswa
-        if ($mahasiswas->isEmpty()) {
-            $mahasiswas = Mahasiswa::with(['programStudi', 'pembimbingIndustri', 'penilaians'])->get();
-        }
-
-        return view('dosen.dashboard', compact('dosen', 'mahasiswas'));
+        return view('dosen.dashboard', compact('dosen', 'mahasiswas', 'jadwals'));
     }
 
     public function storePenilaian(Request $request)

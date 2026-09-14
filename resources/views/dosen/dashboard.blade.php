@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Dosen Pembimbing')
 
 @section('content')
-<div x-data="dosenApp({{ json_encode($mahasiswas ?? []) }})" class="space-y-6">
+<div x-data="dosenApp({{ json_encode($mahasiswas ?? []) }}, {{ json_encode($jadwals ?? []) }})" class="space-y-6">
 
     <!-- Header Panel -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
@@ -71,7 +71,7 @@
                                 <p class="font-bold text-gray-800" x-text="student.company"></p>
                                 <div class="flex items-center gap-2 mt-1">
                                     <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    <span class="text-xs font-bold text-blue-600" x-text="formatDate(student.monitoringDate)"></span>
+                                    <span class="text-xs font-bold text-blue-600" x-text="student.monitoringDate ? formatDate(student.monitoringDate) : 'Belum Dijadwalkan Admin'"></span>
                                 </div>
                             </td>
                             
@@ -260,7 +260,7 @@
 </div>
 
 <script>
-    function dosenApp(serverStudents = []) {
+    function dosenApp(serverStudents = [], serverJadwals = []) {
         return {
             showModal: false,
             selectedStudent: null,
@@ -276,13 +276,16 @@
                         
                         let ptName = (mhs.pembimbing_industri && mhs.pembimbing_industri.perusahaan) ? mhs.pembimbing_industri.perusahaan : ((mhs.pembimbing_industri && mhs.pembimbing_industri.perusahaan) || (mhs.pembimbingIndustri && mhs.pembimbingIndustri.perusahaan) || 'PT Magang PPI');
                         
+                        let jadwalForPT = serverJadwals.find(j => j.perusahaan === ptName);
+                        let monitoringDate = jadwalForPT ? jadwalForPT.tanggal : null;
+                        
                         return {
                             id: mhs.id_mhs || mhs.nim,
                             name: mhs.nama_mhs || mhs.name || 'Mahasiswa',
                             nim: mhs.nim || '-',
                             kelas: mhs.kelas || '-',
                             company: ptName,
-                            monitoringDate: new Date().toISOString().split('T')[0],
+                            monitoringDate: monitoringDate,
                             status: status,
                             scores: penDosen ? {
                                 judul: 'Laporan Presentasi PPI',

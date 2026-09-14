@@ -31,17 +31,9 @@
                 <ul class="space-y-2 px-2">
                     <!-- Menu Dashboard Utama -->
                     <li>
-                        <!-- Perhatikan penggunaan Request::is() untuk menandai menu aktif -->
-                        <a href="{{ route('admin.dashboard') }}" class="flex items-center py-3 rounded-md transition group {{ Request::is('admin/dashboard') ? 'bg-blue-900' : 'hover:bg-blue-700' }}" :class="sidebarOpen ? 'px-4' : 'justify-center px-0'">
+                        <a href="{{ route('kaprodi.dashboard') }}" class="flex items-center py-3 rounded-md transition group {{ Request::is('kaprodi/dashboard') ? 'bg-blue-900' : 'hover:bg-blue-700' }}" :class="sidebarOpen ? 'px-4' : 'justify-center px-0'">
                             <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                             <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap font-semibold">Pusat Kendali</span>
-                        </a>
-                    </li>
-                    <!-- Menu Kelola Akun -->
-                    <li>
-                        <a href="{{ route('admin.users') }}" class="flex items-center py-3 rounded-md transition group {{ Request::is('admin/users') ? 'bg-blue-900' : 'hover:bg-blue-700' }}" :class="sidebarOpen ? 'px-4' : 'justify-center px-0'">
-                            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                            <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap font-semibold">Kelola Akun</span>
                         </a>
                     </li>
                 </ul>
@@ -51,9 +43,22 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden relative z-10">
             <!-- Top Navbar -->
-            <header class="h-16 bg-white shadow-sm flex items-center justify-end px-6">
+            <header class="h-16 bg-blue-800 shadow-sm flex items-center justify-between px-6">
                 <div class="flex items-center">
-                    <span class="text-sm font-bold text-blue-900 mr-4">Hi, {{ Auth::user()->name }}</span>
+                    <div class="shrink-0 flex items-center">
+                        <a href="{{ route('kaprodi.dashboard') }}">
+                            <x-application-logo class="block h-9 w-auto fill-current text-white" />
+                        </a>
+                    </div>
+                    <!-- Navigation Links -->
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <a href="{{ route('kaprodi.dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 border-yellow-400 text-sm font-black leading-5 text-white transition duration-150 ease-in-out">
+                            Dashboard Kaprodi
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm font-bold text-white mr-4">Hi, {{ Auth::user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}" class="m-0 p-0 inline-block">
                         @csrf
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition cursor-pointer font-bold shadow-[2px_2px_0_0_#7f1d1d] hover:translate-y-px hover:translate-x-px hover:shadow-none">

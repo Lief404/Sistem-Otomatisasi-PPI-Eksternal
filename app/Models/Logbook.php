@@ -8,7 +8,7 @@ class Logbook extends Model
 {
     protected $primaryKey = 'id_log';
 
-    protected $fillable = ['nim', 'kd_mat', 'tanggal', 'durasi_mnt', 'kegiatan', 'status', 'jam_mulai', 'jam_selesai', 'minggu_ke'];
+    protected $fillable = ['nim', 'kd_mat', 'tanggal', 'durasi_mnt', 'kegiatan', 'status', 'jam_mulai', 'jam_selesai', 'minggu_ke', 'catatan_mentor'];
 
     public function mahasiswa()
     {

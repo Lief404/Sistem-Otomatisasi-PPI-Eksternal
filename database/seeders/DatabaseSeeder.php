@@ -7,6 +7,7 @@ use App\Models\ProgramStudi;
 use App\Models\MataKuliah;
 use App\Models\Dosen;
 use App\Models\PembimbingIndustri;
+use App\Models\Perusahaan;
 use App\Models\Mahasiswa;
 use App\Models\Logbook;
 use App\Models\Penilaian;
@@ -19,25 +20,37 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Program Studi (Sistem digunakan oleh 3 prodi)
-        $prodi1 = ProgramStudi::create(['nama_prodi' => 'Teknik Manufaktur']);
-        $prodi2 = ProgramStudi::create(['nama_prodi' => 'Teknik Rekayasa Perancangan Manufaktur']);
-        $prodi3 = ProgramStudi::create(['nama_prodi' => 'Teknik Mekatronika']);
+        $prodi1 = ProgramStudi::firstOrCreate(['nama_prodi' => 'TRIN']);
+        $prodi2 = ProgramStudi::firstOrCreate(['nama_prodi' => 'TRO']);
+        $prodi3 = ProgramStudi::firstOrCreate(['nama_prodi' => 'TRMO']);
 
         // 2. Mata Kuliah (Sesuai dengan yang ada di Frontend)
-        $mkPii = MataKuliah::create(['kd_mat' => 'PII', 'nama_komp' => 'Praktik Pengalaman Industri', 'jam_min' => 144]);
-        $mkSup = MataKuliah::create(['kd_mat' => 'SUP', 'nama_komp' => 'Supervisi', 'jam_min' => 20]);
-        $mkK3 = MataKuliah::create(['kd_mat' => 'K3', 'nama_komp' => 'K3 IT', 'jam_min' => 10]);
-        $mkLtd = MataKuliah::create(['kd_mat' => 'LTD', 'nama_komp' => 'Laporan Teknik', 'jam_min' => 30]);
+        $mkPii = MataKuliah::firstOrCreate(['kd_mat' => 'PII'], ['nama_komp' => 'Praktik Pengalaman Industri', 'jam_min' => 144]);
+        $mkSup = MataKuliah::firstOrCreate(['kd_mat' => 'SUP'], ['nama_komp' => 'Supervisi', 'jam_min' => 20]);
+        $mkK3 = MataKuliah::firstOrCreate(['kd_mat' => 'K3'], ['nama_komp' => 'K3 IT', 'jam_min' => 10]);
+        $mkLtd = MataKuliah::firstOrCreate(['kd_mat' => 'LTD'], ['nama_komp' => 'Laporan Teknik', 'jam_min' => 30]);
 
         // 3. Users & Profil Dosen, Mentor, Mahasiswa
         
         // Akun Admin
-        User::create([
-            'name' => 'Administrator',
-            'email' => 'admin@admin.polman',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@admin.polman'],
+            [
+                'name' => 'Administrator',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+            ]
+        );
+
+        // Akun KPS (Kaprodi)
+        User::firstOrCreate(
+            ['email' => 'kps@polman.id'],
+            [
+                'name' => 'Kepala Program Studi',
+                'password' => Hash::make('password'),
+                'role' => 'kaprodi',
+            ]
+        );
 
         // Akun Dosen
         $userDosen = User::create([
@@ -51,6 +64,11 @@ class DatabaseSeeder extends Seeder
             'user_id' => $userDosen->id,
             'nama_dosen' => 'Supriyadi, S.T., M.T.'
         ]);
+
+        // Seed Master Data Perusahaan
+        Perusahaan::firstOrCreate(['nama_perusahaan' => 'PT Bukaka Teknik'], ['alamat' => 'Bogor, Jawa Barat', 'kontak' => '021-8230123']);
+        Perusahaan::firstOrCreate(['nama_perusahaan' => 'PT Solusi Intek Indonesia'], ['alamat' => 'Bandung, Jawa Barat', 'kontak' => '022-7561234']);
+        Perusahaan::firstOrCreate(['nama_perusahaan' => 'PT Pindad Persero'], ['alamat' => 'Bandung, Jawa Barat', 'kontak' => '022-7312041']);
 
         // Akun Mentor Industri
         $userMentor = User::create([

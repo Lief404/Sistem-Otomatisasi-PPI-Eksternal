@@ -7,6 +7,7 @@
         if($roleTitle == 'mahasiswa') $displayRole = 'Login Mahasiswa';
         elseif($roleTitle == 'dosen') $displayRole = 'Login Dosen';
         elseif($roleTitle == 'mentor') $displayRole = 'Login Mentor Industri';
+        elseif($roleTitle == 'kaprodi') $displayRole = 'Login Kaprodi';
         elseif($roleTitle == 'admin') $displayRole = 'Login Administrator';
     @endphp
 
