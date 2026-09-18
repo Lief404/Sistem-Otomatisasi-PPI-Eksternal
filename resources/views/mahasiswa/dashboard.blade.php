@@ -73,20 +73,28 @@
                 </div>
                 
                 <form x-show="sarans.length === 0" @submit.prevent="submitSaran()" class="space-y-4 bg-yellow-50 p-5 md:p-6 rounded-xl border-2 border-yellow-200">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-black text-yellow-900 uppercase tracking-wider mb-1">Tanggal Mengisi</label>
-                            <input type="date" x-model="saranForm.tanggal" required class="w-full border-2 border-yellow-300 rounded-lg p-2.5 font-bold focus:border-yellow-600 outline-none text-gray-800 bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-black text-yellow-900 uppercase tracking-wider mb-1">Alamat PT</label>
-                            <input type="text" :value="perusahaan.alamat" disabled class="w-full border-2 border-yellow-200 rounded-lg p-2.5 font-bold bg-yellow-100/50 text-gray-500 cursor-not-allowed">
-                        </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-black text-yellow-900 uppercase tracking-wider mb-1">Alamat PT</label>
+                        <input type="text" :value="perusahaan.alamat" disabled class="w-full border-2 border-yellow-200 rounded-lg p-2.5 font-bold bg-yellow-100/50 text-gray-500 cursor-not-allowed">
                     </div>
-                    <div>
-                        <label class="block text-xs font-black text-yellow-900 uppercase tracking-wider mb-1">Isi Saran / Masukan</label>
-                        <textarea x-model="saranForm.saran" required rows="3" class="w-full border-2 border-yellow-300 rounded-lg p-3 font-semibold focus:border-yellow-600 outline-none text-gray-800 bg-white" placeholder="Tuliskan saran yang membangun..."></textarea>
-                    </div>
+                    @if($parameterSaran->isEmpty())
+                        <div>
+                            <label class="block text-xs font-black text-yellow-900 uppercase tracking-wider mb-1">Isi Saran / Masukan</label>
+                            <textarea x-model="saranForm.saran" required rows="3" class="w-full border-2 border-yellow-300 rounded-lg p-3 font-semibold focus:border-yellow-600 outline-none text-gray-800 bg-white" placeholder="Tuliskan saran yang membangun..."></textarea>
+                        </div>
+                    @else
+                        @foreach($parameterSaran as $param)
+                            <div class="mb-4">
+                                <h4 class="font-bold text-yellow-900 mb-2 border-b-2 border-yellow-200 pb-1">{{ $param->sub_kategori }}</h4>
+                                @foreach($param->indikator as $ind)
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-black text-yellow-900 uppercase tracking-wider mb-1">{{ $ind }}</label>
+                                        <textarea x-model="saranForm.answers['{{ addslashes($ind) }}']" required rows="2" class="w-full border-2 border-yellow-300 rounded-lg p-3 font-semibold focus:border-yellow-600 outline-none text-gray-800 bg-white" placeholder="Jawaban Anda..."></textarea>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    @endif
                     <div class="flex justify-end pt-2">
                         <button type="submit" class="bg-yellow-400 text-yellow-950 font-black py-3 px-8 rounded-xl border-4 border-yellow-600 shadow-[4px_4px_0_0_#ca8a04] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
@@ -151,7 +159,12 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black text-blue-900" x-text="'Minggu ke-' + String(week.id).padStart(2, '0')"></h3>
+                            <h3 class="text-2xl font-black text-blue-900 flex items-center gap-3">
+                                <span x-text="'Minggu ke-' + String(week.id).padStart(2, '0')"></span>
+                                <template x-if="week.nilai !== null">
+                                    <span class="px-3 py-1 bg-emerald-100 border border-emerald-300 text-emerald-800 text-sm font-bold rounded-lg shadow-sm" x-text="'Nilai: ' + week.nilai"></span>
+                                </template>
+                            </h3>
                             <p class="text-sm font-bold text-gray-500 mt-1">
                                 <span x-text="getWeekTotalMinutes(week) > 0 ? (getWeekTotalMinutes(week) / 60).toFixed(1) + ' Jam diselesaikan' : 'Belum ada pengisian data'"></span>
                             </p>
@@ -174,6 +187,17 @@
                 <!-- Isi Minggu (Daftar Hari) -->
                 <div x-show="week.expanded" x-collapse.duration.400ms>
                     <div class="p-4 md:p-6 bg-white space-y-4">
+                        
+                        <!-- Catatan Mentor untuk Minggu ini -->
+                        <template x-if="week.catatan_mentor">
+                            <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg mb-4">
+                                <p class="text-xs font-black text-emerald-800 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                                    Catatan Mentor
+                                </p>
+                                <p class="text-gray-800 text-sm font-medium italic" x-text="week.catatan_mentor"></p>
+                            </div>
+                        </template>
                         
                         <template x-for="(day, dIndex) in week.days" :key="day.id">
                             
@@ -463,7 +487,8 @@
             saranMentor: saranMentorData || null,
             saranForm: {
                 tanggal: new Date().toISOString().split('T')[0],
-                saran: ''
+                saran: '',
+                answers: {}
             },
 
             addDays(dateStr, days) {
@@ -511,6 +536,7 @@
                 // Group logbook entries by date (YYYY-MM-DD) and by minggu_ke
                 const logbooksByDate = {};
                 const weekStartFromLogbook = {};
+                const weekDataFromLogbook = {};
 
                 if (Array.isArray(existingLogbooks)) {
                     existingLogbooks.forEach(item => {
@@ -523,6 +549,16 @@
                             if (item.minggu_ke) {
                                 if (!weekStartFromLogbook[item.minggu_ke] || item.tanggal < weekStartFromLogbook[item.minggu_ke]) {
                                     weekStartFromLogbook[item.minggu_ke] = item.tanggal;
+                                }
+                                
+                                if (!weekDataFromLogbook[item.minggu_ke]) {
+                                    weekDataFromLogbook[item.minggu_ke] = { nilai: null, catatan_mentor: null };
+                                }
+                                if (item.nilai !== null && item.nilai !== undefined) {
+                                    weekDataFromLogbook[item.minggu_ke].nilai = item.nilai;
+                                }
+                                if (item.catatan_mentor) {
+                                    weekDataFromLogbook[item.minggu_ke].catatan_mentor = item.catatan_mentor;
                                 }
                             }
                         }
@@ -544,6 +580,17 @@
                             let entries = logbooksByDate[dayDateStr];
                             if (entries.length > 0) {
                                 dayStatus = entries[0].status || 'Kerja';
+                                
+                                // FIX: Jika status di database adalah 'Dinilai' (diupdate oleh mentor),
+                                // kita tentukan status aslinya agar UI mahasiswa tetap bisa menampilkan data Kerja/Libur.
+                                if (dayStatus === 'Dinilai') {
+                                    if (entries[0].jam_mulai !== null || (entries[0].durasi_mnt && entries[0].durasi_mnt > 0)) {
+                                        dayStatus = 'Kerja';
+                                    } else {
+                                        dayStatus = 'Libur';
+                                    }
+                                }
+
                                 if (dayStatus !== 'Kerja') {
                                     dayNotes = entries[0].kegiatan || '';
                                 } else {
@@ -593,6 +640,8 @@
                         expanded: i === 1 || hasData,
                         startDate: weekStartDate,
                         endDate: weekEndDate,
+                        nilai: weekDataFromLogbook[i] ? weekDataFromLogbook[i].nilai : null,
+                        catatan_mentor: weekDataFromLogbook[i] ? weekDataFromLogbook[i].catatan_mentor : null,
                         days: daysArr
                     });
                 }
@@ -796,11 +845,18 @@
             },
 
             async submitSaran() {
-                if (!this.saranForm.saran.trim()) return;
+                let finalSaran = '';
+                if (Object.keys(this.saranForm.answers).length > 0) {
+                    finalSaran = JSON.stringify(this.saranForm.answers);
+                } else {
+                    finalSaran = this.saranForm.saran;
+                    if (!finalSaran.trim()) return;
+                }
+                
                 try {
                     let payload = {
                         tanggal: this.saranForm.tanggal,
-                        saran: this.saranForm.saran,
+                        saran: finalSaran,
                         perusahaan: this.perusahaan.nama_perusahaan
                     };
 

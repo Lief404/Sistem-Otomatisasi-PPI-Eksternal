@@ -30,8 +30,10 @@ class DosenController extends Controller
         } else {
             $mahasiswas = collect();
         }
+        
+        $parameters = \App\Models\ParameterPenilaian::all();
 
-        return view('dosen.dashboard', compact('dosen', 'mahasiswas', 'jadwals'));
+        return view('dosen.dashboard', compact('dosen', 'mahasiswas', 'jadwals', 'parameters'));
     }
 
     public function storePenilaian(Request $request)
@@ -40,6 +42,8 @@ class DosenController extends Controller
             'nim' => 'required|string',
             'n_presentasi' => 'required|numeric',
             'n_makalah' => 'required|numeric',
+            'detail_presentasi' => 'nullable|array',
+            'detail_makalah' => 'nullable|array',
         ]);
 
         $user = Auth::user();
@@ -54,6 +58,8 @@ class DosenController extends Controller
             [
                 'n_presentasi' => $request->n_presentasi,
                 'n_makalah' => $request->n_makalah,
+                'detail_presentasi' => $request->detail_presentasi,
+                'detail_makalah' => $request->detail_makalah,
             ]
         );
 

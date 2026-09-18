@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Dosen Pembimbing')
 
 @section('content')
-<div x-data="dosenApp({{ json_encode($mahasiswas ?? []) }}, {{ json_encode($jadwals ?? []) }})" class="space-y-6">
+<div x-data="dosenApp({{ json_encode($mahasiswas ?? []) }}, {{ json_encode($jadwals ?? []) }}, {{ json_encode($parameters ?? []) }})" class="space-y-6">
 
     <!-- Header Panel -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
@@ -166,24 +166,19 @@
                             </div>
                             
                             <div class="space-y-4">
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">I. Teknik Presentasi</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Persiapan</label><input type="number" min="0" max="100" x-model.number="form.a1_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Sistematika Penyajian</label><input type="number" min="0" max="100" x-model.number="form.a1_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Penggunaan Alat</label><input type="number" min="0" max="100" x-model.number="form.a1_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Bahasa Lisan</label><input type="number" min="0" max="100" x-model.number="form.a1_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
+                                <template x-for="(param, pIndex) in paramsPresentasi" :key="pIndex">
+                                    <div>
+                                        <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded" x-text="param.sub_kategori"></h5>
+                                        <div class="grid grid-cols-2 gap-2 mt-2">
+                                            <template x-for="(ind, iIndex) in param.indikator" :key="iIndex">
+                                                <div>
+                                                    <label class="text-xs font-bold text-gray-600" x-text="ind"></label>
+                                                    <input type="number" min="0" max="100" x-model.number="form.presentasi[param.id][iIndex]" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center">
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">II. Diskusi / Tanya Jawab</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Penguasaan Materi</label><input type="number" min="0" max="100" x-model.number="form.a2_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Sistematika Menjawab</label><input type="number" min="0" max="100" x-model.number="form.a2_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Mempertahankan Pendapat</label><input type="number" min="0" max="100" x-model.number="form.a2_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Sikap Penerimaan</label><input type="number" min="0" max="100" x-model.number="form.a2_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                    </div>
-                                </div>
+                                </template>
                                 <div>
                                     <label class="text-xs font-bold text-gray-600 block mb-1">Catatan Evaluasi (Opsional)</label>
                                     <textarea x-model="form.catatanA" rows="2" class="w-full border-2 border-gray-300 rounded p-2 text-sm font-medium"></textarea>
@@ -199,24 +194,19 @@
                             </div>
                             
                             <div class="space-y-4">
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">I. Teknik Penulisan</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Sistematika Penulisan</label><input type="number" min="0" max="100" x-model.number="form.b1_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Kelengkapan Isi</label><input type="number" min="0" max="100" x-model.number="form.b1_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Review Kepustakaan</label><input type="number" min="0" max="100" x-model.number="form.b1_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Bahasa Tulisan</label><input type="number" min="0" max="100" x-model.number="form.b1_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
+                                <template x-for="(param, pIndex) in paramsMakalah" :key="pIndex">
+                                    <div>
+                                        <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded" x-text="param.sub_kategori"></h5>
+                                        <div class="grid grid-cols-2 gap-2 mt-2">
+                                            <template x-for="(ind, iIndex) in param.indikator" :key="iIndex">
+                                                <div>
+                                                    <label class="text-xs font-bold text-gray-600" x-text="ind"></label>
+                                                    <input type="number" min="0" max="100" x-model.number="form.makalah[param.id][iIndex]" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center">
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">II. Pokok Bahasan</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Perumusan Masalah</label><input type="number" min="0" max="100" x-model.number="form.b2_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Analisa Uraian</label><input type="number" min="0" max="100" x-model.number="form.b2_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Penyelesaian Masalah</label><input type="number" min="0" max="100" x-model.number="form.b2_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Kesimpulan & Saran</label><input type="number" min="0" max="100" x-model.number="form.b2_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                    </div>
-                                </div>
+                                </template>
                                 <div>
                                     <label class="text-xs font-bold text-gray-600 block mb-1">Catatan Evaluasi (Opsional)</label>
                                     <textarea x-model="form.catatanB" rows="2" class="w-full border-2 border-gray-300 rounded p-2 text-sm font-medium"></textarea>
@@ -260,13 +250,18 @@
 </div>
 
 <script>
-    function dosenApp(serverStudents = [], serverJadwals = []) {
+    function dosenApp(serverStudents = [], serverJadwals = [], serverParams = []) {
         return {
             showModal: false,
             selectedStudent: null,
             students: [],
+            paramsPresentasi: [],
+            paramsMakalah: [],
 
             init() {
+                this.paramsPresentasi = serverParams.filter(p => p.jenis === 'presentasi');
+                this.paramsMakalah = serverParams.filter(p => p.jenis === 'makalah');
+
                 if (Array.isArray(serverStudents) && serverStudents.length > 0) {
                     this.students = serverStudents.map(mhs => {
                         let penDosen = (mhs.penilaians || []).find(p => p.nidn !== null);
@@ -287,15 +282,7 @@
                             company: ptName,
                             monitoringDate: monitoringDate,
                             status: status,
-                            scores: penDosen ? {
-                                judul: 'Laporan Presentasi PPI',
-                                a1_a: nPres, a1_b: nPres, a1_c: nPres, a1_d: nPres,
-                                a2_a: nPres, a2_b: nPres, a2_c: nPres, a2_d: nPres,
-                                catatanA: '',
-                                b1_a: nMak, b1_b: nMak, b1_c: nMak, b1_d: nMak,
-                                b2_a: nMak, b2_b: nMak, b2_c: nMak, b2_d: nMak,
-                                catatanB: ''
-                            } : null
+                            scores: penDosen ? this.getFilledForm(nPres, nMak) : null
                         };
                     });
                 } else {
@@ -309,15 +296,36 @@
             form: {},
 
             getEmptyForm() {
-                return {
+                let form = {
                     judul: '',
-                    a1_a: 0, a1_b: 0, a1_c: 0, a1_d: 0,
-                    a2_a: 0, a2_b: 0, a2_c: 0, a2_d: 0,
+                    presentasi: {},
+                    makalah: {},
                     catatanA: '',
-                    b1_a: 0, b1_b: 0, b1_c: 0, b1_d: 0,
-                    b2_a: 0, b2_b: 0, b2_c: 0, b2_d: 0,
                     catatanB: ''
                 };
+                
+                this.paramsPresentasi.forEach(p => {
+                    form.presentasi[p.id] = p.indikator.map(() => 0);
+                });
+                this.paramsMakalah.forEach(p => {
+                    form.makalah[p.id] = p.indikator.map(() => 0);
+                });
+                
+                return form;
+            },
+
+            getFilledForm(nPres, nMak) {
+                let form = this.getEmptyForm();
+                form.judul = 'Laporan Presentasi PPI';
+                
+                this.paramsPresentasi.forEach(p => {
+                    form.presentasi[p.id] = p.indikator.map(() => nPres);
+                });
+                this.paramsMakalah.forEach(p => {
+                    form.makalah[p.id] = p.indikator.map(() => nMak);
+                });
+
+                return form;
             },
 
             formatDate(dateString) {
@@ -329,6 +337,15 @@
             openModal(student) {
                 this.selectedStudent = student;
                 this.form = student.scores ? JSON.parse(JSON.stringify(student.scores)) : this.getEmptyForm();
+                
+                // Ensure all current params exist in form state (in case KPS added new ones after draft)
+                this.paramsPresentasi.forEach(p => {
+                    if(!this.form.presentasi[p.id]) this.form.presentasi[p.id] = p.indikator.map(() => 0);
+                });
+                this.paramsMakalah.forEach(p => {
+                    if(!this.form.makalah[p.id]) this.form.makalah[p.id] = p.indikator.map(() => 0);
+                });
+
                 this.showModal = true;
             },
 
@@ -338,12 +355,13 @@
                 this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
 
                 let hasValue = false;
-                for (let key in this.form) {
-                    if (key === 'judul' || key === 'catatanA' || key === 'catatanB') {
-                        if (this.form[key].trim() !== '') hasValue = true;
-                    } else {
-                        if (this.form[key] > 0) hasValue = true;
-                    }
+                if (this.form.judul && this.form.judul.trim() !== '') hasValue = true;
+                
+                for (let pId in this.form.presentasi) {
+                    if (this.form.presentasi[pId].some(val => val > 0)) hasValue = true;
+                }
+                for (let pId in this.form.makalah) {
+                    if (this.form.makalah[pId].some(val => val > 0)) hasValue = true;
                 }
 
                 if (this.selectedStudent.status !== 'Sudah Dinilai') {
@@ -355,15 +373,29 @@
             },
 
             get avgA() {
-                let sum = (this.form.a1_a || 0) + (this.form.a1_b || 0) + (this.form.a1_c || 0) + (this.form.a1_d || 0) +
-                          (this.form.a2_a || 0) + (this.form.a2_b || 0) + (this.form.a2_c || 0) + (this.form.a2_d || 0);
-                return (sum / 8).toFixed(1);
+                if(!this.form.presentasi) return 0.0;
+                let sum = 0;
+                let count = 0;
+                for (let pId in this.form.presentasi) {
+                    this.form.presentasi[pId].forEach(val => {
+                        sum += (parseFloat(val) || 0);
+                        count++;
+                    });
+                }
+                return count > 0 ? (sum / count).toFixed(1) : (0.0).toFixed(1);
             },
             
             get avgB() {
-                let sum = (this.form.b1_a || 0) + (this.form.b1_b || 0) + (this.form.b1_c || 0) + (this.form.b1_d || 0) +
-                          (this.form.b2_a || 0) + (this.form.b2_b || 0) + (this.form.b2_c || 0) + (this.form.b2_d || 0);
-                return (sum / 8).toFixed(1);
+                if(!this.form.makalah) return 0.0;
+                let sum = 0;
+                let count = 0;
+                for (let pId in this.form.makalah) {
+                    this.form.makalah[pId].forEach(val => {
+                        sum += (parseFloat(val) || 0);
+                        count++;
+                    });
+                }
+                return count > 0 ? (sum / count).toFixed(1) : (0.0).toFixed(1);
             },
 
             get nilaiAkhir() {
@@ -391,7 +423,9 @@
                 let payload = {
                     nim: this.selectedStudent.nim,
                     n_presentasi: parseFloat(this.avgA),
-                    n_makalah: parseFloat(this.avgB)
+                    n_makalah: parseFloat(this.avgB),
+                    detail_presentasi: this.form.presentasi,
+                    detail_makalah: this.form.makalah
                 };
 
                 try {

@@ -44,6 +44,7 @@ class MahasiswaController extends Controller
         $perusahaan = null;
         $sarans = collect();
         $saranDariMentor = null;
+        $parameterSaran = \App\Models\ParameterPenilaian::where('jenis', 'saran_mahasiswa')->get();
 
         if ($mahasiswa && $mahasiswa->pembimbingIndustri) {
             $perusahaan = \App\Models\Perusahaan::where('nama_perusahaan', $mahasiswa->pembimbingIndustri->perusahaan)->first();
@@ -51,7 +52,7 @@ class MahasiswaController extends Controller
             $saranDariMentor = \App\Models\SaranMahasiswa::where('nim', $mahasiswa->nim)->orderBy('tanggal', 'desc')->first();
         }
 
-        return view('mahasiswa.dashboard', compact('mahasiswa', 'logbooks', 'fotosByDate', 'perusahaan', 'sarans', 'saranDariMentor'));
+        return view('mahasiswa.dashboard', compact('mahasiswa', 'logbooks', 'fotosByDate', 'perusahaan', 'sarans', 'saranDariMentor', 'parameterSaran'));
     }
 
     public function storeLogbook(Request $request)
@@ -76,6 +77,14 @@ class MahasiswaController extends Controller
         }
 
         // Hapus data logbook di tanggal ini untuk update/replace
+        // Pertahankan nilai dan catatan mentor jika sudah dinilai sebelumnya
+        $existingLogbook = Logbook::where('nim', $mahasiswa->nim)
+               ->where('tanggal', $request->tanggal)
+               ->first();
+        $nilai = $existingLogbook->nilai ?? null;
+        $catatan_mentor = $existingLogbook->catatan_mentor ?? '';
+        $finalStatus = $nilai !== null ? 'Dinilai' : $request->status;
+
         Logbook::where('nim', $mahasiswa->nim)
                ->where('tanggal', $request->tanggal)
                ->delete();
@@ -95,10 +104,12 @@ class MahasiswaController extends Controller
                         'tanggal'     => $request->tanggal,
                         'durasi_mnt'  => $act['waktu'],
                         'kegiatan'    => $act['kegiatan'] ?? '',
-                        'status'      => 'Kerja',
+                        'status'      => $nilai !== null ? 'Dinilai' : 'Kerja',
                         'jam_mulai'   => $act['jamMulai'] ?? null,
                         'jam_selesai' => $act['jamSelesai'] ?? null,
                         'minggu_ke'   => $request->minggu_ke ?? null,
+                        'nilai'       => $nilai,
+                        'catatan_mentor' => $catatan_mentor,
                     ]);
                 }
             }
@@ -109,10 +120,12 @@ class MahasiswaController extends Controller
                 'tanggal'     => $request->tanggal,
                 'durasi_mnt'  => 0,
                 'kegiatan'    => $request->kegiatan ?? '',
-                'status'      => $request->status,
+                'status'      => $finalStatus,
                 'jam_mulai'   => null,
                 'jam_selesai' => null,
                 'minggu_ke'   => $request->minggu_ke ?? null,
+                'nilai'       => $nilai,
+                'catatan_mentor' => $catatan_mentor,
             ]);
         }
 
@@ -173,6 +186,8 @@ class MahasiswaController extends Controller
         $penilaianDosen = null;
         $penilaianMentor = null;
         $logbooks = collect();
+        $disiplin = null;
+        $kuisioner = null;
 
         if ($mahasiswa) {
             // Penilaian dari Dosen (nidn tidak null)
@@ -186,12 +201,99 @@ class MahasiswaController extends Controller
                 ->first();
 
             // Logbook yang sudah ada
-            $logbooks = \App\Models\Logbook::where('nim', $mahasiswa->nim)
+            $logbooks = \App\Models\Logbook::with('mataKuliah')
+                ->where('nim', $mahasiswa->nim)
                 ->orderBy('tanggal')
                 ->get();
+                
+            // Rincian Penilaian Mentor
+            $disiplin = \App\Models\DisiplinMahasiswa::where('nim', $mahasiswa->nim)->first();
+            $kuisioner = \App\Models\KuisionerMentor::where('nim', $mahasiswa->nim)->first();
         }
 
-        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks'));
+        $parameters = \App\Models\ParameterPenilaian::all();
+
+        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks', 'disiplin', 'kuisioner', 'parameters'));
+    }
+
+    public function transkrip($nim) {
+        $mahasiswa = Mahasiswa::with(['programStudi', 'dosen', 'pembimbingIndustri'])
+            ->where('nim', $nim)
+            ->firstOrFail();
+
+        $penilaianDosen = null;
+        $penilaianMentor = null;
+        $logbooks = collect();
+        $disiplin = null;
+        $kuisioner = null;
+
+        if ($mahasiswa) {
+            $penilaianDosen = \App\Models\Penilaian::where('nim', $mahasiswa->nim)
+                ->whereNotNull('nidn')
+                ->first();
+
+            $penilaianMentor = \App\Models\Penilaian::where('nim', $mahasiswa->nim)
+                ->whereNotNull('id_pem')
+                ->first();
+
+            $logbooks = \App\Models\Logbook::with('mataKuliah')
+                ->where('nim', $mahasiswa->nim)
+                ->orderBy('tanggal')
+                ->get();
+                
+            $disiplin = \App\Models\DisiplinMahasiswa::where('nim', $mahasiswa->nim)->first();
+            $kuisioner = \App\Models\KuisionerMentor::where('nim', $mahasiswa->nim)->first();
+        }
+
+        $parameters = \App\Models\ParameterPenilaian::all();
+
+        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks', 'disiplin', 'kuisioner', 'parameters'));
+    }
+
+    public function apiRekapanJam($nim) {
+        $logbooks = \App\Models\Logbook::with('mataKuliah')
+            ->where('nim', $nim)
+            ->orderBy('tanggal')
+            ->get();
+            
+        $totalJamKeseluruhan = round($logbooks->sum('durasi_mnt') / 60, 1);
+        
+        $rekapanJam = [];
+        foreach($logbooks as $lb) {
+            $matkulKode = $lb->kd_mat ?? 'Lainnya';
+            $matkulNama = $lb->mataKuliah ? $lb->mataKuliah->nama_komp : $matkulKode;
+            $minggu = $lb->minggu_ke;
+            $durasiMnt = $lb->durasi_mnt;
+            
+            if (!isset($rekapanJam[$matkulKode])) {
+                $rekapanJam[$matkulKode] = [
+                    'kode' => $matkulKode,
+                    'nama' => $matkulNama,
+                    'total_mnt' => 0,
+                    'mingguan_mnt' => array_fill(1, 20, 0)
+                ];
+            }
+            
+            if ($minggu >= 1 && $minggu <= 20) {
+                $rekapanJam[$matkulKode]['mingguan_mnt'][$minggu] += $durasiMnt;
+            }
+            $rekapanJam[$matkulKode]['total_mnt'] += $durasiMnt;
+        }
+        
+        foreach ($rekapanJam as $k => $v) {
+            $rekapanJam[$k]['total'] = round($v['total_mnt'] / 60, 1);
+            $rekapanJam[$k]['mingguan'] = [];
+            for ($i = 1; $i <= 20; $i++) {
+                $rekapanJam[$k]['mingguan'][$i] = round($v['mingguan_mnt'][$i] / 60, 1);
+            }
+            unset($rekapanJam[$k]['total_mnt']);
+            unset($rekapanJam[$k]['mingguan_mnt']);
+        }
+
+        return response()->json([
+            'totalJamKeseluruhan' => $totalJamKeseluruhan,
+            'rekapanJam' => array_values($rekapanJam)
+        ]);
     }
 
     public function storeSaran(Request $request)

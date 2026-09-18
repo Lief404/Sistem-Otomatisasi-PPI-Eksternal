@@ -28,7 +28,10 @@ class MentorController extends Controller
                 ->where('id_pem', $mentor->id_pem)
                 ->get();
         }
-        return view('mentor.dashboard', compact('mentor', 'mahasiswas'));
+        $parameterSaranMentor = \App\Models\ParameterPenilaian::where('jenis', 'saran_mentor')->get();
+        $parameterDisiplin = \App\Models\ParameterPenilaian::where('jenis', 'disiplin_prestasi')->get();
+        $parameterKuisioner = \App\Models\ParameterPenilaian::where('jenis', 'kuisioner_mentor')->get();
+        return view('mentor.dashboard', compact('mentor', 'mahasiswas', 'parameterSaranMentor', 'parameterDisiplin', 'parameterKuisioner'));
     }
 
     public function storeSaran(Request $request)
@@ -67,19 +70,17 @@ class MentorController extends Controller
         $mentor = PembimbingIndustri::where('user_id', Auth::id())->first();
         if (!$mentor) return response()->json(['message' => 'Unauthorized'], 403);
 
-        $data = $request->validate([
+        $request->validate([
             'nim' => 'required|exists:mahasiswas,nim',
-            'p1' => 'nullable|numeric', 'p2' => 'nullable|numeric', 'p3' => 'nullable|numeric', 'p4' => 'nullable|numeric', 'p5' => 'nullable|numeric',
-            's3' => 'nullable|numeric', 's5' => 'nullable|numeric', 's6' => 'nullable|numeric', 's7' => 'nullable|numeric', 's8' => 'nullable|numeric',
+            'penilaian' => 'required|string',
         ]);
 
-        foreach (['p1','p2','p3','p4','p5','s3','s5','s6','s7','s8'] as $f) {
-            $data[$f] = $data[$f] ?? 0;
-        }
-
         \App\Models\DisiplinMahasiswa::updateOrCreate(
-            ['nim' => $data['nim'], 'id_pem' => $mentor->id_pem],
-            array_merge($data, ['tanggal' => now()->toDateString()])
+            ['nim' => $request->nim, 'id_pem' => $mentor->id_pem],
+            [
+                'penilaian' => $request->penilaian,
+                'tanggal' => now()->toDateString()
+            ]
         );
 
         return response()->json(['success' => true, 'message' => 'Penilaian Disiplin/Prestasi berhasil disimpan.']);
@@ -90,19 +91,17 @@ class MentorController extends Controller
         $mentor = PembimbingIndustri::where('user_id', Auth::id())->first();
         if (!$mentor) return response()->json(['message' => 'Unauthorized'], 403);
 
-        $data = $request->validate([
+        $request->validate([
             'nim' => 'required|exists:mahasiswas,nim',
-            'h1a' => 'nullable|numeric', 'h1b' => 'nullable|numeric', 'h1c' => 'nullable|numeric', 'h1d' => 'nullable|numeric', 'h2' => 'nullable|numeric', 'h3' => 'nullable|numeric', 'h4' => 'nullable|numeric',
-            's1' => 'nullable|numeric', 's2' => 'nullable|numeric', 's3' => 'nullable|numeric', 's4' => 'nullable|numeric', 's5' => 'nullable|numeric', 's6' => 'nullable|numeric', 's7' => 'nullable|numeric', 's8' => 'nullable|numeric',
+            'penilaian' => 'required|string',
         ]);
 
-        foreach (['h1a','h1b','h1c','h1d','h2','h3','h4','s1','s2','s3','s4','s5','s6','s7','s8'] as $f) {
-            $data[$f] = $data[$f] ?? 0;
-        }
-
         \App\Models\KuisionerMentor::updateOrCreate(
-            ['nim' => $data['nim'], 'id_pem' => $mentor->id_pem],
-            array_merge($data, ['tanggal' => now()->toDateString()])
+            ['nim' => $request->nim, 'id_pem' => $mentor->id_pem],
+            [
+                'penilaian' => $request->penilaian,
+                'tanggal' => now()->toDateString()
+            ]
         );
 
         return response()->json(['success' => true, 'message' => 'Kuisioner berhasil disimpan.']);
@@ -119,12 +118,14 @@ class MentorController extends Controller
             'logbooks.*.id' => 'required|exists:logbooks,id_log',
             'logbooks.*.status' => 'nullable|string',
             'logbooks.*.catatan_mentor' => 'nullable|string',
+            'logbooks.*.nilai' => 'nullable|numeric|min:0|max:100',
         ]);
 
         foreach ($data['logbooks'] as $l) {
-            if (!empty($l['status']) || !empty($l['catatan_mentor'])) {
+            if (isset($l['nilai']) || !empty($l['status']) || !empty($l['catatan_mentor'])) {
                 \App\Models\Logbook::where('id_log', $l['id'])->update([
-                    'status' => $l['status'] ?? 'Pending',
+                    'status' => 'Dinilai',
+                    'nilai' => $l['nilai'] ?? null,
                     'catatan_mentor' => $l['catatan_mentor'] ?? ''
                 ]);
             }

@@ -17,6 +17,8 @@
         Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
         Route::get('/admin/users', [AdminController::class, 'users'])->name('admin.users');
         Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
+        Route::put('/admin/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+        Route::put('/admin/users/{id}/password', [AdminController::class, 'changePassword'])->name('admin.users.password');
         Route::delete('/admin/users/{id}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
         Route::post('/admin/perusahaan', [AdminController::class, 'storePerusahaan'])->name('admin.perusahaan.store');
         Route::delete('/admin/perusahaan/{id}', [AdminController::class, 'destroyPerusahaan'])->name('admin.perusahaan.destroy');
@@ -55,6 +57,12 @@
     // Group Route untuk Kaprodi
     Route::middleware(['auth', 'role:kaprodi'])->group(function () {
         Route::get('/kaprodi/dashboard', [App\Http\Controllers\KaprodiController::class, 'index'])->name('kaprodi.dashboard');
+        
+        // Route untuk manajemen parameter penilaian presentasi
+        Route::get('/kaprodi/parameter', [App\Http\Controllers\KaprodiController::class, 'parameter'])->name('kaprodi.parameter');
+        Route::post('/kaprodi/parameter', [App\Http\Controllers\KaprodiController::class, 'storeParameter'])->name('kaprodi.parameter.store');
+        Route::put('/kaprodi/parameter/{id}', [App\Http\Controllers\KaprodiController::class, 'updateParameter'])->name('kaprodi.parameter.update');
+        Route::delete('/kaprodi/parameter/{id}', [App\Http\Controllers\KaprodiController::class, 'destroyParameter'])->name('kaprodi.parameter.destroy');
     });
 
     // Route bawaan Breeze untuk Profile (Bisa diakses semua role yang login)
@@ -67,6 +75,9 @@
             if ($role === 'kaprodi') return redirect()->route('kaprodi.dashboard');
             return redirect()->route('mahasiswa.dashboard');
         })->name('dashboard');
+
+        Route::get('/transkrip/{nim}', [MahasiswaController::class, 'transkrip'])->name('transkrip.show');
+        Route::get('/api/rekapan-jam/{nim}', [MahasiswaController::class, 'apiRekapanJam'])->name('api.rekapan-jam');
 
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

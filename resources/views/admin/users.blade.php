@@ -15,7 +15,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V11m0 0h4m-4 0H9m4 0v10"></path></svg>
                 + Perusahaan Baru
             </button>
-            <button @click="openModal()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-y-px hover:translate-x-px hover:shadow-none transition-all flex items-center gap-2">
+            <button @click="openAddModal()" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a] hover:translate-y-px hover:translate-x-px hover:shadow-none transition-all flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                 + Tambah Akun
             </button>
@@ -103,6 +103,7 @@
                             <tr class="border-b-2 border-gray-300 text-gray-600">
                                 <th class="p-3 font-black text-sm uppercase">Nama / Identitas</th>
                                 <th class="p-3 font-black text-sm uppercase">Email Login</th>
+                                <th class="p-3 font-black text-sm uppercase">Password</th>
                                 
                                 <template x-if="activeRole === 'mahasiswa'">
                                     <th class="p-3 font-black text-sm uppercase">Prodi & Kelas</th>
@@ -122,7 +123,7 @@
                         <tbody>
                             <template x-if="getFilteredUsers().length === 0">
                                 <tr>
-                                    <td colspan="6" class="p-10 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-200 mt-4 rounded-xl">
+                                    <td :colspan="activeRole === 'mahasiswa' ? 7 : (activeRole === 'mentor' ? 5 : 4)" class="p-10 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-200 mt-4 rounded-xl">
                                         Data tidak ditemukan.
                                     </td>
                                 </tr>
@@ -136,6 +137,17 @@
                                     </td>
                                     <td class="p-3 font-bold text-gray-700 text-sm" x-text="user.email"></td>
                                     
+                                    <!-- Kolom Password (Posisi ke-3, sejajar dengan Header Password) -->
+                                    <td class="p-3" x-data="{ showPw: false }">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-mono text-xs font-bold" :class="showPw ? 'text-gray-800' : 'text-gray-400'" x-text="showPw ? (user.plain_password || '—') : '••••••••'"></span>
+                                            <button type="button" @click="showPw = !showPw" class="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100" title="Lihat/Sembunyikan Password">
+                                                <svg x-show="!showPw" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                <svg x-show="showPw" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                                            </button>
+                                        </div>
+                                    </td>
+
                                     <template x-if="activeRole === 'mahasiswa'">
                                         <td class="p-3">
                                             <span class="bg-blue-100 text-blue-800 border border-blue-300 px-2 py-0.5 rounded text-xs font-black" x-text="user.prodi + ' - ' + user.kelas"></span>
@@ -145,7 +157,7 @@
                                     <!-- Kolom Dosen Pembimbing untuk Mahasiswa -->
                                     <template x-if="activeRole === 'mahasiswa'">
                                         <td class="p-3">
-                                            <span :class="user.dosen_name ? 'bg-purple-100 border-purple-300 text-purple-900' : 'bg-gray-100 border-gray-300 text-gray-400 italic'" class="border px-2 py-1 rounded text-xs font-bold whitespace-nowrap" x-text="user.dosen_name || 'Belum Belum Ditentukan'"></span>
+                                            <span :class="user.dosen_name ? 'bg-purple-100 border-purple-300 text-purple-900' : 'bg-gray-100 border-gray-300 text-gray-400 italic'" class="border px-2 py-1 rounded text-xs font-bold whitespace-nowrap" x-text="user.dosen_name || 'Belum Ditentukan'"></span>
                                         </td>
                                     </template>
 
@@ -171,6 +183,12 @@
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                                                 </button>
                                             </template>
+                                            <button @click="openEditModal(user)" class="text-yellow-600 hover:text-yellow-800 p-2 bg-yellow-50 border border-yellow-200 rounded hover:bg-yellow-100 transition-colors" title="Edit Akun">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </button>
+                                            <button @click="openPasswordModal(user)" class="text-purple-600 hover:text-purple-800 p-2 bg-purple-50 border border-purple-200 rounded hover:bg-purple-100 transition-colors" title="Ubah Password">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                            </button>
                                             <button @click="deleteUser(user.id)" class="text-red-500 hover:text-red-700 p-2 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors" title="Hapus Akun">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                             </button>
@@ -231,7 +249,7 @@
             <div x-show="showModal" x-transition.scale class="relative inline-block bg-white text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle max-w-lg w-full border-4 border-blue-900 rounded-xl">
                 
                 <div class="bg-blue-900 px-6 py-4 flex justify-between items-center text-white">
-                    <h3 class="text-xl font-black uppercase" x-text="'Tambah Akun ' + (activeRole === 'perusahaan' ? 'Mahasiswa' : activeRole)"></h3>
+                    <h3 class="text-xl font-black uppercase" x-text="(isEdit ? 'Edit Akun ' : 'Tambah Akun ') + (activeRole === 'perusahaan' ? 'Mahasiswa' : activeRole)"></h3>
                     <button @click="showModal = false" class="hover:text-red-400 transition-colors">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -320,7 +338,7 @@
 
                     <div class="pt-4 border-t-2 border-gray-200 flex justify-end">
                         <button type="submit" class="bg-green-500 text-white font-black px-6 py-2 rounded-lg border-2 border-green-900 shadow-[3px_3px_0_0_#14532d] hover:translate-y-px hover:translate-x-px hover:shadow-none transition-all">
-                            Simpan Akun Baru
+                            <span x-text="isEdit ? 'Simpan Perubahan' : 'Simpan Akun Baru'"></span>
                         </button>
                     </div>
                 </form>
@@ -382,6 +400,65 @@
         </div>
     </div>
 
+    <!-- MODAL UBAH PASSWORD -->
+    <div x-show="showPasswordModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-password-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div x-show="showPasswordModal" x-transition.opacity class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" @click="showPasswordModal = false"></div>
+
+            <div x-show="showPasswordModal" x-transition.scale class="relative inline-block bg-white text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle max-w-md w-full border-4 border-purple-900 rounded-xl">
+                
+                <div class="bg-purple-900 px-6 py-4 flex justify-between items-center text-white">
+                    <div>
+                        <h3 class="text-xl font-black uppercase">Ubah Password</h3>
+                        <p class="text-xs text-purple-200 font-medium" x-text="formPassword.name + ' (' + formPassword.email + ')'"></p>
+                    </div>
+                    <button @click="showPasswordModal = false" class="hover:text-red-400 transition-colors">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form @submit.prevent="savePassword()" class="p-6 bg-gray-50 space-y-4">
+                    <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-3 text-sm text-purple-800 font-bold">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Password baru akan langsung aktif setelah disimpan.
+                    </div>
+
+                    <div x-data="{ show1: false }">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Password Baru <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input :type="show1 ? 'text' : 'password'" x-model="formPassword.password" required minlength="1" class="w-full border-2 border-gray-300 rounded p-2 pr-10 font-bold outline-none focus:border-purple-600" placeholder="Masukkan password baru (cth: 123)...">
+                            <button type="button" @click="show1 = !show1" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
+                                <svg x-show="!show1" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                <svg x-show="show1" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-data="{ show2: false }">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Konfirmasi Password <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input :type="show2 ? 'text' : 'password'" x-model="formPassword.password_confirmation" required minlength="1" class="w-full border-2 border-gray-300 rounded p-2 pr-10 font-bold outline-none focus:border-purple-600" placeholder="Ulangi password baru (cth: 123)...">
+                            <button type="button" @click="show2 = !show2" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
+                                <svg x-show="!show2" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                <svg x-show="show2" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t-2 border-gray-200 flex justify-end gap-2">
+                        <button type="button" @click="showPasswordModal = false" class="px-4 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg border border-gray-300 hover:bg-gray-300 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="bg-purple-600 text-white font-black px-6 py-2 rounded-lg border-2 border-purple-900 shadow-[3px_3px_0_0_#581c87] hover:translate-y-px hover:translate-x-px hover:shadow-none transition-all">
+                            Simpan Password
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL TAMBAH PERUSAHAAN -->
     <div x-show="showPerusahaanModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
@@ -433,8 +510,10 @@
             filterProdi: 'ALL',
             searchQuery: '',
             showModal: false,
+            isEdit: false,
             showPerusahaanModal: false,
             showAssignModal: false,
+            showPasswordModal: false,
             
             companies: {!! $companies ?? '[]' !!},
             perusahaans: {!! $perusahaans ?? '[]' !!},
@@ -447,6 +526,7 @@
             formUser: { name: '', identifier: '', prodi: '', kelas: '', pt: '', nidn: '', id_pem: '', emailPrefix: '' },
             formPerusahaan: { nama_perusahaan: '', alamat: '', kontak: '' },
             formAssign: { nim: '', name: '', identifier: '', nidn: '', id_pem: '' },
+            formPassword: { id: '', name: '', email: '', password: '', password_confirmation: '' },
 
             setRole(role) {
                 this.activeRole = role;
@@ -485,7 +565,36 @@
             },
 
             openModal() {
+                this.isEdit = false;
                 this.formUser = { name: '', identifier: '', prodi: '', kelas: '', pt: '', nidn: '', id_pem: '', emailPrefix: '' };
+                this.showModal = true;
+            },
+
+            openAddModal() {
+                this.isEdit = false;
+                this.formUser = {
+                    id: '',
+                    name: '',
+                    emailPrefix: '',
+                    identifier: '',
+                    kelas: '',
+                    pt: '',
+                    prodi: 'TRO'
+                };
+                this.showModal = true;
+            },
+
+            openEditModal(user) {
+                this.isEdit = true;
+                this.formUser = {
+                    id: user.id,
+                    name: user.name,
+                    emailPrefix: user.email.split('@')[0],
+                    identifier: user.identifier || '',
+                    kelas: user.kelas || '',
+                    pt: user.pt || '',
+                    prodi: user.prodi || 'TRO'
+                };
                 this.showModal = true;
             },
 
@@ -503,6 +612,48 @@
                     id_pem: user.id_pem || ''
                 };
                 this.showAssignModal = true;
+            },
+
+            openPasswordModal(user) {
+                this.formPassword = {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    password: '',
+                    password_confirmation: ''
+                };
+                this.showPasswordModal = true;
+            },
+
+            async savePassword() {
+                if (this.formPassword.password !== this.formPassword.password_confirmation) {
+                    alert('Password dan konfirmasi password tidak cocok!');
+                    return;
+                }
+                try {
+                    let response = await fetch(`{{ url('/admin/users') }}/${this.formPassword.id}/password`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ password: this.formPassword.password })
+                    });
+                    let result = await response.json();
+                    if (response.ok && result.success) {
+                        alert(`Password untuk ${this.formPassword.name} berhasil diubah!`);
+                        const targetUser = this.users.find(u => u.id === this.formPassword.id);
+                        if (targetUser) {
+                            targetUser.plain_password = this.formPassword.password;
+                        }
+                        this.showPasswordModal = false;
+                    } else {
+                        alert('Gagal: ' + (result.message || 'Terjadi kesalahan'));
+                    }
+                } catch (error) {
+                    alert('Gagal mengubah password.');
+                    console.error(error);
+                }
             },
 
             getEmailDomain() {
@@ -529,8 +680,11 @@
                 };
 
                 try {
-                    let response = await fetch('{{ route("admin.users.store") }}', {
-                        method: 'POST',
+                    let method = this.isEdit ? 'PUT' : 'POST';
+                    let url = this.isEdit ? `{{ url('/admin/users') }}/${this.formUser.id}` : '{{ route("admin.users.store") }}';
+                    
+                    let response = await fetch(url, {
+                        method: method,
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
@@ -540,7 +694,7 @@
 
                     let result = await response.json();
                     if (response.ok && result.success) {
-                        alert(`Akun ${roleToSave} baru berhasil ditambahkan!`);
+                        alert(this.isEdit ? `Akun ${roleToSave} berhasil diperbarui!` : `Akun ${roleToSave} baru berhasil ditambahkan!`);
                         window.location.reload();
                     } else {
                         alert('Gagal menyimpan: ' + (result.message || 'Terjadi kesalahan'));

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'plain_password',
         'role',
     ];
 
@@ -61,5 +62,10 @@ class User extends Authenticatable
     public function pembimbingIndustri()
     {
         return $this->hasOne(PembimbingIndustri::class);
+    }
+
+    public function kaprodi()
+    {
+        return $this->hasOne(Kaprodi::class);
     }
 }

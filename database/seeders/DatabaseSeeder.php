@@ -37,26 +37,64 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@admin.polman'],
             [
                 'name' => 'Administrator',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('123'),
+                'plain_password' => '123',
                 'role' => 'admin',
             ]
         );
 
         // Akun KPS (Kaprodi)
-        User::firstOrCreate(
-            ['email' => 'kps@polman.id'],
+        // 1. KPS TRIN
+        $userKpsTrin = User::firstOrCreate(
+            ['email' => 'kps.trin@polman.id'],
             [
-                'name' => 'Kepala Program Studi',
-                'password' => Hash::make('password'),
+                'name' => 'Kaprodi TRIN',
+                'password' => Hash::make('123'),
+                'plain_password' => '123',
                 'role' => 'kaprodi',
             ]
+        );
+        \App\Models\Kaprodi::firstOrCreate(
+            ['user_id' => $userKpsTrin->id],
+            ['id_prodi' => $prodi1->id_prodi, 'nama_kaprodi' => 'Ir. Kaprodi TRIN, M.T.']
+        );
+
+        // 2. KPS TRO
+        $userKpsTro = User::firstOrCreate(
+            ['email' => 'kps.tro@polman.id'],
+            [
+                'name' => 'Kaprodi TRO',
+                'password' => Hash::make('123'),
+                'plain_password' => '123',
+                'role' => 'kaprodi',
+            ]
+        );
+        \App\Models\Kaprodi::firstOrCreate(
+            ['user_id' => $userKpsTro->id],
+            ['id_prodi' => $prodi2->id_prodi, 'nama_kaprodi' => 'Dr. Kaprodi TRO, S.T.']
+        );
+
+        // 3. KPS TRMO
+        $userKpsTrmo = User::firstOrCreate(
+            ['email' => 'kps.trmo@polman.id'],
+            [
+                'name' => 'Kaprodi TRMO',
+                'password' => Hash::make('123'),
+                'plain_password' => '123',
+                'role' => 'kaprodi',
+            ]
+        );
+        \App\Models\Kaprodi::firstOrCreate(
+            ['user_id' => $userKpsTrmo->id],
+            ['id_prodi' => $prodi3->id_prodi, 'nama_kaprodi' => 'Kaprodi TRMO, Ph.D.']
         );
 
         // Akun Dosen
         $userDosen = User::create([
             'name' => 'Supriyadi',
             'email' => 'supriyadi@dosen.polman',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123'),
+            'plain_password' => '123',
             'role' => 'dosen',
         ]);
         $dosen = Dosen::create([
@@ -74,7 +112,8 @@ class DatabaseSeeder extends Seeder
         $userMentor = User::create([
             'name' => 'Budi Santoso', // Mentor Industri
             'email' => 'bukaka@industri.id',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123'),
+            'plain_password' => '123',
             'role' => 'mentor',
         ]);
         $mentor = PembimbingIndustri::create([
@@ -87,7 +126,8 @@ class DatabaseSeeder extends Seeder
         $userMhs = User::create([
             'name' => 'Mahasiswa PPI',
             'email' => '223443026@mhs.polman',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123'),
+            'plain_password' => '123',
             'role' => 'mahasiswa',
         ]);
         $mahasiswa = Mahasiswa::create([
@@ -104,7 +144,8 @@ class DatabaseSeeder extends Seeder
         $userMhs2 = User::create([
             'name' => 'Budi Santoso (Mhs)',
             'email' => '223443027@mhs.polman',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123'),
+            'plain_password' => '123',
             'role' => 'mahasiswa',
         ]);
         $mahasiswa2 = Mahasiswa::create([
@@ -121,7 +162,8 @@ class DatabaseSeeder extends Seeder
         $userMhs3 = User::create([
             'name' => 'Rina Melati',
             'email' => '223443028@mhs.polman',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('123'),
+            'plain_password' => '123',
             'role' => 'mahasiswa',
         ]);
         $mahasiswa3 = Mahasiswa::create([

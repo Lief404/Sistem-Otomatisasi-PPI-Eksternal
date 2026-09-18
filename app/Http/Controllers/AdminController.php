@@ -79,7 +79,9 @@ class AdminController extends Controller
                 $nim = $user->mahasiswa->nim;
                 $identifier = 'NIM: ' . $nim;
                 $prodiName = $user->mahasiswa->programStudi->nama_prodi ?? '';
-                if (stripos($prodiName, 'Mekatronika') !== false) {
+                if (in_array($prodiName, ['TRIN', 'TRO', 'TRMO'])) {
+                    $prodi = $prodiName;
+                } elseif (stripos($prodiName, 'Mekatronika') !== false) {
                     $prodi = 'TRMO';
                 } elseif (stripos($prodiName, 'Manufaktur') !== false && stripos($prodiName, 'Perancangan') !== false) {
                     $prodi = 'TRIN';
@@ -107,6 +109,7 @@ class AdminController extends Controller
                 'prodi' => $prodi,
                 'kelas' => $kelas,
                 'email' => $user->email,
+                'plain_password' => $user->plain_password,
                 'pt' => $pt,
                 'nidn' => $nidn,
                 'id_pem' => $id_pem,
@@ -145,21 +148,18 @@ class AdminController extends Controller
         DB::beginTransaction();
         try {
             // 1. Create User
+            $plainPass = $request->plain_password ?: '123';
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
-                'password' => Hash::make('password123'), // Default password
+                'password' => Hash::make($plainPass),
+                'plain_password' => $plainPass,
                 'role' => $request->role,
             ]);
 
             // 2. Create Profile based on Role
             if ($request->role === 'mahasiswa') {
-                $prodiMap = [
-                    'TRIN' => 'Teknik Rekayasa Perancangan Manufaktur',
-                    'TRO' => 'Teknik Manufaktur',
-                    'TRMO' => 'Teknik Mekatronika',
-                ];
-                $namaProdi = $prodiMap[$request->prodi] ?? 'Teknik Manufaktur';
+                $namaProdi = $request->prodi ?? 'TRO';
                 $prodi = ProgramStudi::firstOrCreate(['nama_prodi' => $namaProdi]);
 
                 if ($request->pt) {
@@ -196,11 +196,90 @@ class AdminController extends Controller
             }
 
             DB::commit();
-            return response()->json(['message' => 'Akun ' . ucfirst($request->role) . ' berhasil ditambahkan']);
+            return response()->json(['success' => true, 'message' => 'Akun ' . ucfirst($request->role) . ' berhasil ditambahkan']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Gagal menambahkan akun: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal menambahkan akun: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$id,
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+            ]);
+
+            if ($user->role === 'mahasiswa') {
+                $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+                if ($mahasiswa) {
+                    $namaProdi = $request->prodi ?? 'TRO';
+                    $prodi = ProgramStudi::firstOrCreate(['nama_prodi' => $namaProdi]);
+
+                    if ($request->pt) {
+                        Perusahaan::firstOrCreate(['nama_perusahaan' => $request->pt]);
+                    }
+
+                    $mahasiswa->update([
+                        'nim' => $request->identifier,
+                        'nama_mhs' => $request->name,
+                        'kelas' => $request->kelas,
+                        'id_prodi' => $prodi->id_prodi,
+                    ]);
+                }
+            } elseif ($user->role === 'dosen') {
+                $dosen = Dosen::where('user_id', $user->id)->first();
+                if ($dosen) {
+                    $dosen->update([
+                        'nidn' => $request->identifier,
+                        'nama_dosen' => $request->name,
+                    ]);
+                }
+            } elseif ($user->role === 'mentor') {
+                if ($request->pt) {
+                    Perusahaan::firstOrCreate(['nama_perusahaan' => $request->pt]);
+                }
+
+                $mentor = PembimbingIndustri::where('user_id', $user->id)->first();
+                if ($mentor) {
+                    $mentor->update([
+                        'nama_pem' => $request->name,
+                        'perusahaan' => $request->pt,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Akun berhasil diperbarui']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Gagal memperbarui akun: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function changePassword(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'password' => 'required|string|min:1',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+            'plain_password' => $request->password,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Password berhasil diubah']);
     }
 
     public function destroyUser($id)

@@ -12,8 +12,7 @@ class DisiplinMahasiswa extends Model
     protected $fillable = [
         'nim',
         'id_pem',
-        'p1', 'p2', 'p3', 'p4', 'p5',
-        's3', 's5', 's6', 's7', 's8',
+        'penilaian',
         'tanggal'
     ];
 

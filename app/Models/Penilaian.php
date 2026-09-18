@@ -8,7 +8,12 @@ class Penilaian extends Model
 {
     protected $primaryKey = 'id_nilai';
 
-    protected $fillable = ['nim', 'nidn', 'id_pem', 'n_presentasi', 'n_makalah', 'n_prestasi', 'n_supervisi'];
+    protected $fillable = ['nim', 'nidn', 'id_pem', 'n_presentasi', 'n_makalah', 'n_prestasi', 'n_supervisi', 'detail_presentasi', 'detail_makalah'];
+
+    protected $casts = [
+        'detail_presentasi' => 'array',
+        'detail_makalah' => 'array',
+    ];
 
     public function mahasiswa()
     {
