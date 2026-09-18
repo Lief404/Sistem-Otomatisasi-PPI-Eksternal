@@ -28,7 +28,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => ['required', 'string'], // Diubah dari email menjadi username
+            'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
     }
@@ -44,28 +44,24 @@ class LoginRequest extends FormRequest
 
         $expectedRole = $this->input('expected_role');
 
-        // Lakukan Autentikasi dengan USERNAME dan PASSWORD
-        if (! Auth::attempt($this->only('username', 'password'), $this->boolean('remember'))) {
+        // Lakukan Autentikasi bawaan Laravel terlebih dahulu ke Database
+        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'username' => 'Username atau Password salah.',
+                'email' => trans('auth.failed'),
             ]);
         }
 
-        // Jika berhasil login, cek Role-nya
+        // Jika berhasil login, cek kecocokan pintu masuk (expected) dengan role asli di Database
         $user = Auth::user();
-
-        // LOGIKA FILTER: Cek kecocokan pintu masuk (expected) dengan role asli di DB
+        
         if ($expectedRole && $expectedRole !== $user->role) {
-            
-            // Pengecualian: Admin bebas masuk dari pintu mana saja
+            // Pengecualian: Biarkan admin bebas masuk dari pintu mana saja
             if ($user->role !== 'admin') {
-                
-                Auth::logout(); // Keluarkan kembali karena salah pintu
-                
+                Auth::logout(); // Logout user karena salah pintu masuk
                 throw ValidationException::withMessages([
-                    'username' => 'Akses ditolak! Silahkan login melalui portal khusus ' . ucfirst($user->role) . '.',
+                    'email' => 'Silahkan login menggunakan akun ' . $expectedRole . '!',
                 ]);
             }
         }
@@ -89,7 +85,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'username' => trans('auth.throttle', [ // Ubah ke username
+            'email' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -101,7 +97,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        // Ubah dari email menjadi username
-        return Str::transliterate(Str::lower($this->string('username')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
     }
 }

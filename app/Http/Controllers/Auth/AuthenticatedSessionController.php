@@ -36,6 +36,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended('/dosen/dashboard');
         } elseif ($role === 'mentor') {
             return redirect()->intended('/mentor/dashboard');
+        } elseif ($role === 'kaprodi') {
+            return redirect()->intended('/kaprodi/dashboard');
         } 
         
         // Default mahasiswa

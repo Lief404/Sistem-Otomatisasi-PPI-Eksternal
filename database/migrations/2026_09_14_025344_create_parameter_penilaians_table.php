@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mentors', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-    $table->string('perusahaan');
-    $table->timestamps();
-});
+        Schema::create('parameter_penilaians', function (Blueprint $table) {
+            $table->id();
+            $table->enum('jenis', ['presentasi', 'makalah']);
+            $table->string('sub_kategori');
+            $table->json('indikator');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('mentors');
+        Schema::dropIfExists('parameter_penilaians');
     }
 };

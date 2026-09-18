@@ -2,7 +2,7 @@
 @section('title', 'Dashboard Dosen Pembimbing')
 
 @section('content')
-<div x-data="dosenApp()" class="space-y-6">
+<div x-data="dosenApp({{ json_encode($mahasiswas ?? []) }}, {{ json_encode($jadwals ?? []) }}, {{ json_encode($parameters ?? []) }})" class="space-y-6">
 
     <!-- Header Panel -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
@@ -71,7 +71,7 @@
                                 <p class="font-bold text-gray-800" x-text="student.company"></p>
                                 <div class="flex items-center gap-2 mt-1">
                                     <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    <span class="text-xs font-bold text-blue-600" x-text="formatDate(student.monitoringDate)"></span>
+                                    <span class="text-xs font-bold text-blue-600" x-text="student.monitoringDate ? formatDate(student.monitoringDate) : 'Belum Dijadwalkan Admin'"></span>
                                 </div>
                             </td>
                             
@@ -166,24 +166,19 @@
                             </div>
                             
                             <div class="space-y-4">
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">I. Teknik Presentasi</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Persiapan</label><input type="number" min="0" max="100" x-model.number="form.a1_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Sistematika Penyajian</label><input type="number" min="0" max="100" x-model.number="form.a1_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Penggunaan Alat</label><input type="number" min="0" max="100" x-model.number="form.a1_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Bahasa Lisan</label><input type="number" min="0" max="100" x-model.number="form.a1_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
+                                <template x-for="(param, pIndex) in paramsPresentasi" :key="pIndex">
+                                    <div>
+                                        <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded" x-text="param.sub_kategori"></h5>
+                                        <div class="grid grid-cols-2 gap-2 mt-2">
+                                            <template x-for="(ind, iIndex) in param.indikator" :key="iIndex">
+                                                <div>
+                                                    <label class="text-xs font-bold text-gray-600" x-text="ind"></label>
+                                                    <input type="number" min="0" max="100" x-model.number="form.presentasi[param.id][iIndex]" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center">
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">II. Diskusi / Tanya Jawab</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Penguasaan Materi</label><input type="number" min="0" max="100" x-model.number="form.a2_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Sistematika Menjawab</label><input type="number" min="0" max="100" x-model.number="form.a2_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Mempertahankan Pendapat</label><input type="number" min="0" max="100" x-model.number="form.a2_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Sikap Penerimaan</label><input type="number" min="0" max="100" x-model.number="form.a2_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                    </div>
-                                </div>
+                                </template>
                                 <div>
                                     <label class="text-xs font-bold text-gray-600 block mb-1">Catatan Evaluasi (Opsional)</label>
                                     <textarea x-model="form.catatanA" rows="2" class="w-full border-2 border-gray-300 rounded p-2 text-sm font-medium"></textarea>
@@ -199,24 +194,19 @@
                             </div>
                             
                             <div class="space-y-4">
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">I. Teknik Penulisan</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Sistematika Penulisan</label><input type="number" min="0" max="100" x-model.number="form.b1_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Kelengkapan Isi</label><input type="number" min="0" max="100" x-model.number="form.b1_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Review Kepustakaan</label><input type="number" min="0" max="100" x-model.number="form.b1_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Bahasa Tulisan</label><input type="number" min="0" max="100" x-model.number="form.b1_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
+                                <template x-for="(param, pIndex) in paramsMakalah" :key="pIndex">
+                                    <div>
+                                        <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded" x-text="param.sub_kategori"></h5>
+                                        <div class="grid grid-cols-2 gap-2 mt-2">
+                                            <template x-for="(ind, iIndex) in param.indikator" :key="iIndex">
+                                                <div>
+                                                    <label class="text-xs font-bold text-gray-600" x-text="ind"></label>
+                                                    <input type="number" min="0" max="100" x-model.number="form.makalah[param.id][iIndex]" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center">
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <h5 class="font-bold text-gray-700 bg-gray-100 p-2 rounded">II. Pokok Bahasan</h5>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div><label class="text-xs font-bold text-gray-600">a. Perumusan Masalah</label><input type="number" min="0" max="100" x-model.number="form.b2_a" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">b. Analisa Uraian</label><input type="number" min="0" max="100" x-model.number="form.b2_b" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">c. Penyelesaian Masalah</label><input type="number" min="0" max="100" x-model.number="form.b2_c" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                        <div><label class="text-xs font-bold text-gray-600">d. Kesimpulan & Saran</label><input type="number" min="0" max="100" x-model.number="form.b2_d" class="w-full border-2 border-gray-300 p-1 rounded font-bold text-center"></div>
-                                    </div>
-                                </div>
+                                </template>
                                 <div>
                                     <label class="text-xs font-bold text-gray-600 block mb-1">Catatan Evaluasi (Opsional)</label>
                                     <textarea x-model="form.catatanB" rows="2" class="w-full border-2 border-gray-300 rounded p-2 text-sm font-medium"></textarea>
@@ -260,35 +250,82 @@
 </div>
 
 <script>
-    function dosenApp() {
+    function dosenApp(serverStudents = [], serverJadwals = [], serverParams = []) {
         return {
             showModal: false,
             selectedStudent: null,
-            
-            // Dummy Data Mahasiswa dengan object 'scores' untuk menyimpan riwayat input
-            students: [
-                { id: 1, name: 'Alief Muhammad S', nim: '223443026', kelas: '3 AEC-2', company: 'PT Solusi Intek Indonesia', monitoringDate: '2026-08-25', status: 'Belum Dinilai', scores: null },
-                { id: 2, name: 'Budi Santoso', nim: '223443027', kelas: '3 AEC-2', company: 'PT Dirgantara Indonesia', monitoringDate: '2026-08-28', status: 'Belum Dinilai', scores: null },
-                { id: 3, name: 'Rina Melati', nim: '223443028', kelas: '3 AEC-2', company: 'PT Solusi Intek Indonesia', monitoringDate: '2026-08-25', status: 'Draft', 
-                  scores: { judul: 'Sistem Terintegrasi', a1_a: 80, a1_b: 0, a1_c: 0, a1_d: 0, a2_a: 0, a2_b: 0, a2_c: 0, a2_d: 0, catatanA: '', b1_a: 0, b1_b: 0, b1_c: 0, b1_d: 0, b2_a: 0, b2_b: 0, b2_c: 0, b2_d: 0, catatanB: '' }
-                },
-                { id: 4, name: 'Siti Aminah', nim: '223443029', kelas: '3 AEC-2', company: 'PT Pindad', monitoringDate: '2026-09-02', status: 'Sudah Dinilai',
-                  scores: { judul: 'Analisis K3 Industri', a1_a: 85, a1_b: 80, a1_c: 90, a1_d: 85, a2_a: 80, a2_b: 85, a2_c: 80, a2_d: 90, catatanA: 'Sangat baik', b1_a: 85, b1_b: 85, b1_c: 80, b1_d: 85, b2_a: 90, b2_b: 85, b2_c: 80, b2_d: 85, catatanB: '' }
+            students: [],
+            paramsPresentasi: [],
+            paramsMakalah: [],
+
+            init() {
+                this.paramsPresentasi = serverParams.filter(p => p.jenis === 'presentasi');
+                this.paramsMakalah = serverParams.filter(p => p.jenis === 'makalah');
+
+                if (Array.isArray(serverStudents) && serverStudents.length > 0) {
+                    this.students = serverStudents.map(mhs => {
+                        let penDosen = (mhs.penilaians || []).find(p => p.nidn !== null);
+                        let status = penDosen ? 'Sudah Dinilai' : 'Belum Dinilai';
+                        let nPres = penDosen ? (penDosen.n_presentasi || 0) : 0;
+                        let nMak = penDosen ? (penDosen.n_makalah || 0) : 0;
+                        
+                        let ptName = (mhs.pembimbing_industri && mhs.pembimbing_industri.perusahaan) ? mhs.pembimbing_industri.perusahaan : ((mhs.pembimbing_industri && mhs.pembimbing_industri.perusahaan) || (mhs.pembimbingIndustri && mhs.pembimbingIndustri.perusahaan) || 'PT Magang PPI');
+                        
+                        let jadwalForPT = serverJadwals.find(j => j.perusahaan === ptName);
+                        let monitoringDate = jadwalForPT ? jadwalForPT.tanggal : null;
+                        
+                        return {
+                            id: mhs.id_mhs || mhs.nim,
+                            name: mhs.nama_mhs || mhs.name || 'Mahasiswa',
+                            nim: mhs.nim || '-',
+                            kelas: mhs.kelas || '-',
+                            company: ptName,
+                            monitoringDate: monitoringDate,
+                            status: status,
+                            scores: penDosen ? this.getFilledForm(nPres, nMak) : null
+                        };
+                    });
+                } else {
+                    this.students = [
+                        { id: 1, name: 'Alief Muhammad S', nim: '223443026', kelas: '3 AEC-2', company: 'PT Solusi Intek Indonesia', monitoringDate: '2026-08-25', status: 'Belum Dinilai', scores: null },
+                        { id: 2, name: 'Budi Santoso', nim: '223443027', kelas: '3 AEC-2', company: 'PT Dirgantara Indonesia', monitoringDate: '2026-08-28', status: 'Belum Dinilai', scores: null }
+                    ];
                 }
-            ],
+            },
 
             form: {},
 
             getEmptyForm() {
-                return {
+                let form = {
                     judul: '',
-                    a1_a: 0, a1_b: 0, a1_c: 0, a1_d: 0,
-                    a2_a: 0, a2_b: 0, a2_c: 0, a2_d: 0,
+                    presentasi: {},
+                    makalah: {},
                     catatanA: '',
-                    b1_a: 0, b1_b: 0, b1_c: 0, b1_d: 0,
-                    b2_a: 0, b2_b: 0, b2_c: 0, b2_d: 0,
                     catatanB: ''
                 };
+                
+                this.paramsPresentasi.forEach(p => {
+                    form.presentasi[p.id] = p.indikator.map(() => 0);
+                });
+                this.paramsMakalah.forEach(p => {
+                    form.makalah[p.id] = p.indikator.map(() => 0);
+                });
+                
+                return form;
+            },
+
+            getFilledForm(nPres, nMak) {
+                let form = this.getEmptyForm();
+                form.judul = 'Laporan Presentasi PPI';
+                
+                this.paramsPresentasi.forEach(p => {
+                    form.presentasi[p.id] = p.indikator.map(() => nPres);
+                });
+                this.paramsMakalah.forEach(p => {
+                    form.makalah[p.id] = p.indikator.map(() => nMak);
+                });
+
+                return form;
             },
 
             formatDate(dateString) {
@@ -299,28 +336,34 @@
 
             openModal(student) {
                 this.selectedStudent = student;
-                // Copy data nilai lama (jika ada) ke form, atau gunakan form kosong
                 this.form = student.scores ? JSON.parse(JSON.stringify(student.scores)) : this.getEmptyForm();
+                
+                // Ensure all current params exist in form state (in case KPS added new ones after draft)
+                this.paramsPresentasi.forEach(p => {
+                    if(!this.form.presentasi[p.id]) this.form.presentasi[p.id] = p.indikator.map(() => 0);
+                });
+                this.paramsMakalah.forEach(p => {
+                    if(!this.form.makalah[p.id]) this.form.makalah[p.id] = p.indikator.map(() => 0);
+                });
+
                 this.showModal = true;
             },
 
             closeModal() {
                 if(!this.selectedStudent) return;
 
-                // 1. Simpan apa yang ada di form saat ini ke data mahasiswa (sebagai draft)
                 this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
 
-                // 2. Cek apakah ada inputan yang diisi (judul atau angka > 0)
                 let hasValue = false;
-                for (let key in this.form) {
-                    if (key === 'judul' || key === 'catatanA' || key === 'catatanB') {
-                        if (this.form[key].trim() !== '') hasValue = true;
-                    } else {
-                        if (this.form[key] > 0) hasValue = true;
-                    }
+                if (this.form.judul && this.form.judul.trim() !== '') hasValue = true;
+                
+                for (let pId in this.form.presentasi) {
+                    if (this.form.presentasi[pId].some(val => val > 0)) hasValue = true;
+                }
+                for (let pId in this.form.makalah) {
+                    if (this.form.makalah[pId].some(val => val > 0)) hasValue = true;
                 }
 
-                // 3. Ubah status otomatis jika statusnya belum final ("Sudah Dinilai")
                 if (this.selectedStudent.status !== 'Sudah Dinilai') {
                     this.selectedStudent.status = hasValue ? 'Draft' : 'Belum Dinilai';
                 }
@@ -329,17 +372,30 @@
                 this.selectedStudent = null;
             },
 
-            // Kalkulasi
             get avgA() {
-                let sum = (this.form.a1_a || 0) + (this.form.a1_b || 0) + (this.form.a1_c || 0) + (this.form.a1_d || 0) +
-                          (this.form.a2_a || 0) + (this.form.a2_b || 0) + (this.form.a2_c || 0) + (this.form.a2_d || 0);
-                return (sum / 8).toFixed(1);
+                if(!this.form.presentasi) return 0.0;
+                let sum = 0;
+                let count = 0;
+                for (let pId in this.form.presentasi) {
+                    this.form.presentasi[pId].forEach(val => {
+                        sum += (parseFloat(val) || 0);
+                        count++;
+                    });
+                }
+                return count > 0 ? (sum / count).toFixed(1) : (0.0).toFixed(1);
             },
             
             get avgB() {
-                let sum = (this.form.b1_a || 0) + (this.form.b1_b || 0) + (this.form.b1_c || 0) + (this.form.b1_d || 0) +
-                          (this.form.b2_a || 0) + (this.form.b2_b || 0) + (this.form.b2_c || 0) + (this.form.b2_d || 0);
-                return (sum / 8).toFixed(1);
+                if(!this.form.makalah) return 0.0;
+                let sum = 0;
+                let count = 0;
+                for (let pId in this.form.makalah) {
+                    this.form.makalah[pId].forEach(val => {
+                        sum += (parseFloat(val) || 0);
+                        count++;
+                    });
+                }
+                return count > 0 ? (sum / count).toFixed(1) : (0.0).toFixed(1);
             },
 
             get nilaiAkhir() {
@@ -363,12 +419,39 @@
                 return 'text-red-600';
             },
 
-            submitPenilaian() {
-                // Simpan permanen dan ubah status ke Sudah Dinilai
-                this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
-                this.selectedStudent.status = 'Sudah Dinilai';
-                
-                alert(`Data disimpan! Nilai Akhir untuk ${this.selectedStudent.name} adalah ${this.nilaiAkhir}.`);
+            async submitPenilaian() {
+                let payload = {
+                    nim: this.selectedStudent.nim,
+                    n_presentasi: parseFloat(this.avgA),
+                    n_makalah: parseFloat(this.avgB),
+                    detail_presentasi: this.form.presentasi,
+                    detail_makalah: this.form.makalah
+                };
+
+                try {
+                    let response = await fetch('{{ route("dosen.penilaian.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let result = await response.json();
+                    if (response.ok) {
+                        this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
+                        this.selectedStudent.status = 'Sudah Dinilai';
+                        alert(`Data disimpan ke Database! Nilai Akhir untuk ${this.selectedStudent.name} adalah ${this.nilaiAkhir}.`);
+                    } else {
+                        alert('Gagal menyimpan penilaian: ' + (result.message || 'Error'));
+                    }
+                } catch (e) {
+                    this.selectedStudent.scores = JSON.parse(JSON.stringify(this.form));
+                    this.selectedStudent.status = 'Sudah Dinilai';
+                    alert(`Data disimulasikan disimpan! Nilai Akhir untuk ${this.selectedStudent.name} adalah ${this.nilaiAkhir}.`);
+                }
                 
                 this.showModal = false;
                 this.selectedStudent = null;

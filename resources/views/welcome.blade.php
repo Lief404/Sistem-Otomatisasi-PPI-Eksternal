@@ -35,6 +35,7 @@
                             if(Auth::user()->role === 'admin') $url = '/admin/dashboard';
                             elseif(Auth::user()->role === 'dosen') $url = '/dosen/dashboard';
                             elseif(Auth::user()->role === 'mentor') $url = '/mentor/dashboard';
+                            elseif(Auth::user()->role === 'kaprodi') $url = '/kaprodi/dashboard';
                         @endphp
                         
                         <a href="{{ $url }}" class="bg-yellow-400 text-blue-900 font-bold px-6 py-2 border-2 border-blue-900 rounded-lg shadow-[4px_4px_0_0_#1e3a8a] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all duration-200 inline-block">
@@ -72,6 +73,7 @@
                         if(Auth::user()->role === 'admin') $url = '/admin/dashboard';
                         elseif(Auth::user()->role === 'dosen') $url = '/dosen/dashboard';
                         elseif(Auth::user()->role === 'mentor') $url = '/mentor/dashboard';
+                        elseif(Auth::user()->role === 'kaprodi') $url = '/kaprodi/dashboard';
                     @endphp
                     <a href="{{ $url }}" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl border-2 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] hover:translate-y-1 hover:translate-x-1 hover:shadow-[2px_2px_0_0_#1e3a8a] transition-all duration-200 text-lg inline-block">
                         Lanjut ke Dashboard
@@ -271,7 +273,7 @@
                 </div>
 
                 <!-- Grid Pilihan Role dengan parameter URL role -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     
                     <a href="/login?role=mahasiswa" class="group flex flex-col items-center justify-center p-8 bg-white border-2 border-blue-200 rounded-xl shadow-[6px_6px_0_0_#3b82f6] hover:translate-y-1 hover:translate-x-1 hover:shadow-[2px_2px_0_0_#3b82f6] hover:border-blue-500 transition-all duration-200">
                         <div class="p-4 bg-blue-50 rounded-full group-hover:scale-110 transition-transform duration-300">
@@ -295,6 +297,14 @@
                         </div>
                         <h4 class="mt-4 text-xl font-bold text-gray-800">Mentor PT</h4>
                         <p class="text-sm text-gray-500 mt-2 text-center">Verifikasi & Penilaian Kinerja</p>
+                    </a>
+
+                    <a href="/login?role=kaprodi" class="group flex flex-col items-center justify-center p-8 bg-white border-2 border-blue-200 rounded-xl shadow-[6px_6px_0_0_#3b82f6] hover:translate-y-1 hover:translate-x-1 hover:shadow-[2px_2px_0_0_#3b82f6] hover:border-blue-500 transition-all duration-200">
+                        <div class="p-4 bg-blue-50 rounded-full group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </div>
+                        <h4 class="mt-4 text-xl font-bold text-gray-800">Kaprodi</h4>
+                        <p class="text-sm text-gray-500 mt-2 text-center">Monitoring Masukan & Evaluasi</p>
                     </a>
 
                 </div>

@@ -8,16 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('mata_kuliahs', function (Blueprint $table) {
-            $table->id('id_mat'); // Ini akan membuat Unsigned Big Integer
-            $table->string('nama_komp');
-            $table->integer('jam_min');
+        Schema::create('perusahaans', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama_perusahaan')->unique();
+            $table->text('alamat')->nullable();
+            $table->string('kontak')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('mata_kuliahs');
+        Schema::dropIfExists('perusahaans');
     }
 };
