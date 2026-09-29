@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PembimbingIndustri;
 use App\Models\Mahasiswa;
+use App\Models\Approval; // TAMBAHAN: Jangan lupa import model Approval
 use Illuminate\Support\Facades\Auth;
 
 class MentorController extends Controller
@@ -13,7 +14,10 @@ class MentorController extends Controller
     {
         $user = Auth::user();
         $mentor = PembimbingIndustri::where('user_id', $user->id)->first();
+        
         $mahasiswas = collect();
+        $notifikasiTTD = collect(); // Inisialisasi awal notifikasi
+
         if ($mentor) {
             $mahasiswas = Mahasiswa::with(['logbooks', 'penilaians', 
             'saranMahasiswas' => function($query) use ($mentor) {
@@ -27,11 +31,23 @@ class MentorController extends Controller
             }])
                 ->where('id_pem', $mentor->id_pem)
                 ->get();
+
+            // TAMBAHAN: Ambil pengajuan TTD (Disiplin & Kuisioner) dari mahasiswa bimbingan mentor ini
+            $notifikasiTTD = Approval::with('mahasiswa')
+                ->whereHas('mahasiswa', function($query) use ($mentor) {
+                    $query->where('id_pem', $mentor->id_pem); 
+                })
+                ->whereIn('jenis_form', ['disiplin', 'kuisioner'])
+                ->where('status', 'pending')
+                ->get();
         }
+        
         $parameterSaranMentor = \App\Models\ParameterPenilaian::where('jenis', 'saran_mentor')->get();
         $parameterDisiplin = \App\Models\ParameterPenilaian::where('jenis', 'disiplin_prestasi')->get();
         $parameterKuisioner = \App\Models\ParameterPenilaian::where('jenis', 'kuisioner_mentor')->get();
-        return view('mentor.dashboard', compact('mentor', 'mahasiswas', 'parameterSaranMentor', 'parameterDisiplin', 'parameterKuisioner'));
+        
+        // Mengirim notifikasiTTD ke view
+        return view('mentor.dashboard', compact('mentor', 'mahasiswas', 'parameterSaranMentor', 'parameterDisiplin', 'parameterKuisioner', 'notifikasiTTD'));
     }
 
     public function storeSaran(Request $request)
@@ -65,6 +81,7 @@ class MentorController extends Controller
 
         return response()->json(['message' => 'Saran dan masukan berhasil dikirim.']);
     }
+    
     public function storeDisiplin(Request $request)
     {
         $mentor = PembimbingIndustri::where('user_id', Auth::id())->first();
@@ -107,6 +124,19 @@ class MentorController extends Controller
         return response()->json(['success' => true, 'message' => 'Kuisioner berhasil disimpan.']);
     }
 
+    public function riwayatTtd()
+    {
+    // Mengambil data approval yang statusnya sudah BUKAN pending (sudah di-acc/reject)
+    // Sesuaikan nama kolom mentor_id / dosen_id dengan database Anda
+    $riwayat = Approval::with('mahasiswa') 
+                ->where('penilai_id', auth()->user()->id)
+                ->whereIn('status', ['accepted', 'rejected'])
+                ->orderBy('updated_at', 'desc')
+                ->paginate(15);
+
+    return view('mentor.riwayat_ttd', compact('riwayat'));
+    }
+
     public function storeLogbook(Request $request)
     {
         $mentor = PembimbingIndustri::where('user_id', Auth::id())->first();
@@ -118,17 +148,27 @@ class MentorController extends Controller
             'logbooks.*.id' => 'required|exists:logbooks,id_log',
             'logbooks.*.status' => 'nullable|string',
             'logbooks.*.catatan_mentor' => 'nullable|string',
-            'logbooks.*.nilai' => 'nullable|numeric|min:0|max:100',
+            'logbooks.*.nilai' => 'required|numeric|decimal:0,2|min:0|max:100',
         ]);
 
         foreach ($data['logbooks'] as $l) {
-            if (isset($l['nilai']) || !empty($l['status']) || !empty($l['catatan_mentor'])) {
-                \App\Models\Logbook::where('id_log', $l['id'])->update([
-                    'status' => 'Dinilai',
-                    'nilai' => $l['nilai'] ?? null,
-                    'catatan_mentor' => $l['catatan_mentor'] ?? ''
-                ]);
-            }
+            $nilai = (float) $l['nilai'];
+            $predikat = match (true) {
+                $nilai >= 85 => 'A',
+                $nilai >= 80 => 'AB',
+                $nilai >= 70 => 'B',
+                $nilai >= 65 => 'BC',
+                $nilai >= 55 => 'C',
+                $nilai >= 40 => 'D',
+                default => 'E',
+            };
+
+            \App\Models\Logbook::where('id_log', $l['id'])->update([
+                'status' => 'Dinilai',
+                'nilai' => $nilai,
+                'predikat_nilai' => $predikat,
+                'catatan_mentor' => $l['catatan_mentor'] ?? ''
+            ]);
         }
 
         return response()->json(['success' => true, 'message' => 'Evaluasi Logbook berhasil disimpan.']);

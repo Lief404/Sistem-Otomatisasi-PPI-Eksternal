@@ -137,10 +137,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function storeUser(Request $request)
+public function storeUser(Request $request)
     {
         $request->validate([
-            'role' => 'required|in:admin,mahasiswa,dosen,mentor',
+            'role' => 'required|in:admin,mahasiswa,dosen,mentor,kaprodi',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
         ]);
@@ -191,8 +191,6 @@ class AdminController extends Controller
                     'nama_pem' => $request->name,
                     'perusahaan' => $request->pt,
                 ]);
-            } elseif ($request->role === 'kaprodi') {
-                // Kaprodi just needs a user account for now
             }
 
             DB::commit();
@@ -229,18 +227,30 @@ class AdminController extends Controller
                         Perusahaan::firstOrCreate(['nama_perusahaan' => $request->pt]);
                     }
 
+                    $cleanNim = $request->identifier;
+                    if (str_starts_with($cleanNim, 'NIM: ')) {
+                        $cleanNim = trim(str_replace('NIM:', '', $cleanNim));
+                    }
+
+                    // PERBAIKAN: Menyertakan nidn dan id_pem agar ikut terupdate
                     $mahasiswa->update([
-                        'nim' => $request->identifier,
+                        'nim' => $cleanNim,
                         'nama_mhs' => $request->name,
                         'kelas' => $request->kelas,
                         'id_prodi' => $prodi->id_prodi,
+                        'nidn' => $request->nidn ?: null,
+                        'id_pem' => $request->id_pem ?: null,
                     ]);
                 }
             } elseif ($user->role === 'dosen') {
                 $dosen = Dosen::where('user_id', $user->id)->first();
                 if ($dosen) {
+                    $cleanNidn = $request->identifier;
+                    if (str_starts_with($cleanNidn, 'NIP: ')) {
+                        $cleanNidn = trim(str_replace('NIP:', '', $cleanNidn));
+                    }
                     $dosen->update([
-                        'nidn' => $request->identifier,
+                        'nidn' => $cleanNidn,
                         'nama_dosen' => $request->name,
                     ]);
                 }
@@ -391,5 +401,107 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal menghapus jadwal: ' . $e->getMessage()], 500);
         }
+    }
+
+    // --- FITUR BACKUP, RESTORE, DELETE ALL & RENAME KATEGORI ---
+    
+    public function listBackups()
+    {
+        $directory = storage_path('app/private/backup');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+        $files = glob($directory . '/*.json');
+        $backupList = [];
+        foreach ($files as $file) {
+            $backupList[] = [
+                'filename' => basename($file),
+                'size' => filesize($file),
+                'updated_at' => date('Y-m-d H:i:s', filemtime($file))
+            ];
+        }
+        return response()->json(['success' => true, 'data' => $backupList]);
+    }
+
+    public function createBackup(Request $request)
+    {
+        $category = $request->input('category', 'mahasiswa');
+        $filename = $request->input('filename', 'backup_' . $category . '_' . date('Ymd_His') . '.json');
+        
+        $data = [];
+        if ($category === 'mahasiswa') {
+            $data = Mahasiswa::with(['user', 'programStudi', 'pembimbingIndustri'])->get();
+        } elseif ($category === 'dosen') {
+            $data = Dosen::with('user')->get();
+        } elseif ($category === 'mentor') {
+            $data = PembimbingIndustri::with('user')->get();
+        } elseif ($category === 'perusahaan') {
+            $data = Perusahaan::all();
+        }
+
+        $directory = storage_path('app/private/backup');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $filePath = $directory . '/' . $filename;
+        file_put_contents($filePath, json_encode($data, JSON_PRETTY_PRINT));
+
+        return response()->json(['success' => true, 'message' => "Backup kategori {$category} berhasil disimpan ke {$filename}"]);
+    }
+
+    public function deleteCategoryData(Request $request)
+    {
+        $category = $request->input('category');
+        DB::beginTransaction();
+        try {
+            if ($category === 'mahasiswa') {
+                $userIds = Mahasiswa::pluck('user_id');
+                Mahasiswa::query()->delete();
+                User::whereIn('id', $userIds)->delete();
+            } elseif ($category === 'dosen') {
+                $userIds = Dosen::pluck('user_id');
+                Dosen::query()->delete();
+                User::whereIn('id', $userIds)->delete();
+            } elseif ($category === 'mentor') {
+                $userIds = PembimbingIndustri::pluck('user_id');
+                PembimbingIndustri::query()->delete();
+                User::whereIn('id', $userIds)->delete();
+            } elseif ($category === 'perusahaan') {
+                Perusahaan::query()->delete();
+            }
+            DB::commit();
+            return response()->json(['success' => true, 'message' => "Seluruh data kategori {$category} berhasil dihapus."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus data: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function renameBackup(Request $request)
+    {
+        $oldName = $request->input('old_name');
+        $newName = $request->input('new_name');
+        
+        $directory = storage_path('app/private/backup');
+        $oldPath = $directory . '/' . $oldName;
+        $newPath = $directory . '/' . (str_ends_with($newName, '.json') ? $newName : $newName . '.json');
+
+        if (file_exists($oldPath)) {
+            rename($oldPath, $newPath);
+            return response()->json(['success' => true, 'message' => 'File backup berhasil direname.']);
+        }
+        return response()->json(['success' => false, 'message' => 'File backup tidak ditemukan.'], 404);
+    }
+
+    public function deleteBackupFile(Request $request)
+    {
+        $filename = $request->input('filename');
+        $filePath = storage_path('app/private/backup/' . $filename);
+        if (file_exists($filePath)) {
+            unlink($filePath);
+            return response()->json(['success' => true, 'message' => 'File backup berhasil dihapus.']);
+        }
+        return response()->json(['success' => false, 'message' => 'File tidak ditemukan.'], 404);
     }
 }

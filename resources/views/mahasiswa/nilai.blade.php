@@ -75,7 +75,6 @@
         
         @if(request('mode') !== 'modal')
         <div class="mt-6 md:mt-0 flex flex-wrap gap-3 relative z-10">
-            <!-- Tombol Kembali -->
             <a href="javascript:history.back()" class="bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 hover:text-gray-900 font-semibold px-6 py-3 rounded-2xl shadow-sm transition-all duration-300 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 Kembali
@@ -104,9 +103,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- BAGIAN 1: PENILAIAN INDUSTRI (MENTOR)      -->
-    <!-- ========================================== -->
+    <!-- BAGIAN 1: PENILAIAN INDUSTRI (MENTOR) -->
     <div class="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden mb-8">
         <div class="bg-gray-50 border-b border-gray-200 p-6 md:p-8 flex items-center gap-4">
             <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
@@ -119,23 +116,30 @@
         </div>
 
         <div class="p-6 md:p-8 space-y-10">
-            
-            <!-- A. Logbook Mingguan (Rincian 20 Minggu) -->
+            <!-- A. Logbook Mingguan (Tanpa TTD) -->
             <div>
                 <div class="flex justify-between items-end mb-4">
-                    <h4 class="text-lg font-bold text-gray-800">A. Validasi Logbook Harian (Skala 0-100)</h4>
-                    <span class="bg-emerald-50 text-emerald-700 font-black px-4 py-1.5 rounded-lg border border-emerald-200 text-sm">
-                        Rata-rata: <span x-text="getAverageLogbook()"></span>
-                    </span>
+                    <div>
+                        <h4 class="text-lg font-bold text-gray-800">A. Validasi Logbook Harian (Skala 0-100)</h4>
+                        <p class="text-xs font-medium text-gray-400 mt-1">Nilai tersinkron otomatis dari penilaian mentor.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-emerald-50 text-emerald-700 font-black px-4 py-1.5 rounded-lg border border-emerald-200 text-sm">
+                            Rata-rata: <span x-text="getAverageLogbook()"></span>
+                        </span>
+                        <p class="text-[10px] font-medium text-gray-400 mt-2" x-text="'Pembaruan: ' + data.mentor.logbookUpdatedAt"></p>
+                    </div>
                 </div>
                 
-                <!-- Grid 20 Kotak Minggu -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                     <template x-for="item in data.mentor.logbook" :key="item.minggu">
                         <div class="border border-gray-200 rounded-xl p-3 flex justify-between items-center bg-gray-50/50 hover:border-emerald-300 transition-colors">
                             <span class="text-xs font-semibold text-gray-500">Minggu <span x-text="item.minggu"></span></span>
                             <template x-if="item.nilai !== null">
-                                <span class="font-black text-gray-900 text-lg" x-text="item.nilai"></span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-black text-gray-900 text-lg" x-text="formatScore(item.nilai)"></span>
+                                    <span class="px-2 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-xs font-black text-emerald-800" x-text="item.predikat || getLogbookGrade(item.nilai)"></span>
+                                </div>
                             </template>
                             <template x-if="item.nilai === null">
                                 <span class="font-bold text-gray-300 text-sm">-</span>
@@ -172,13 +176,55 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- TTD BOX DISIPLIN -->
+                @if(auth()->check() && auth()->user()->role == 'mahasiswa')
+                <div class="mt-5 flex justify-end">
+                    <div class="border border-gray-200 bg-gray-50/80 rounded-2xl p-5 w-56 text-center flex flex-col items-center justify-center min-h-[160px] shadow-sm relative">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">TTD DISIPLIN</p>
+                        
+                        <div x-show="['belum_mengajukan'].includes(data.approval.disiplin.status)" class="w-full">
+                            <button @click="ajukanQR('disiplin')" class="w-full bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800 transition shadow-sm mb-2">Ajukan TTD</button>
+                            <span class="text-[10px] text-gray-400 font-medium italic">Belum disahkan</span>
+                        </div>
+                        
+                        <div x-show="data.approval.disiplin.status === 'pending'" class="w-full flex flex-col items-center justify-center">
+                            <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-3">Menunggu Acc</span>
+                            <button @click="batalkanQR('disiplin')" class="flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-full transition-colors shadow-sm" title="Batalkan Pengajuan">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                            <span class="text-[9px] text-gray-400 mt-1">Batal</span>
+                        </div>
+                        
+                        <div x-show="data.approval.disiplin.status === 'rejected'" class="w-full">
+                            <span class="bg-red-100 text-red-800 border border-red-200 font-black px-3 py-1 rounded text-xs block mb-2">DITOLAK</span>
+                            <p class="text-xs text-red-600 italic mb-3 leading-tight line-clamp-2" :title="data.approval.disiplin.alasan" x-text="data.approval.disiplin.alasan"></p>
+                            <button @click="ajukanQR('disiplin')" class="w-full border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold py-1.5 rounded-lg transition">Ajukan Ulang</button>
+                        </div>
+                        
+                        <div x-show="data.approval.disiplin.status === 'accepted'" class="w-full flex flex-col items-center">
+                            <div class="w-24 h-24 bg-white border border-gray-200 p-1.5 mb-2 rounded-lg shadow-sm">
+                                <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent('{{ url('/approval') }}/' + data.approval.disiplin.token)" alt="QR Code" class="w-full h-full object-contain">
+                            </div>
+                            <span class="text-emerald-600 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                Verified
+                            </span>
+                            <!-- TOMBOL TEST: Reset / Batalkan ACC agar bisa diajukan ulang -->
+                            <button @click="resetQR('disiplin')" class="text-[10px] bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-bold px-2.5 py-1 rounded-md transition shadow-sm flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Reset / Acc Ulang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <!-- C. Tabel Kuisioner Hardskill & Softskill -->
             <div>
                 <h4 class="text-lg font-bold text-gray-800 mb-4">C. Kuisioner Kompetensi (Skala 1-4)</h4>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
                     <!-- Hardskill -->
                     <div class="rounded-2xl border border-gray-200 overflow-hidden">
                         <table class="w-full text-left text-sm whitespace-nowrap">
@@ -227,6 +273,44 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- TTD BOX KUISIONER -->
+                @if(auth()->check() && auth()->user()->role == 'mahasiswa')
+                <div class="mt-5 flex justify-end">
+                    <div class="border border-gray-200 bg-gray-50/80 rounded-2xl p-5 w-56 text-center flex flex-col items-center justify-center min-h-[160px] shadow-sm relative">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">TTD KUISIONER</p>
+                        
+                        <div x-show="['belum_mengajukan'].includes(data.approval.kuisioner.status)" class="w-full">
+                            <button @click="ajukanQR('kuisioner')" class="w-full bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800 transition shadow-sm mb-2">Ajukan TTD</button>
+                            <span class="text-[10px] text-gray-400 font-medium italic">Belum disahkan</span>
+                        </div>
+                        
+                        <div x-show="data.approval.kuisioner.status === 'pending'" class="w-full flex flex-col items-center justify-center">
+                            <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-3">Menunggu Acc</span>
+                            <button @click="batalkanQR('kuisioner')" class="flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-full transition-colors shadow-sm" title="Batalkan Pengajuan">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                            <span class="text-[9px] text-gray-400 mt-1">Batal</span>
+                        </div>
+                        
+                        <div x-show="data.approval.kuisioner.status === 'rejected'" class="w-full">
+                            <span class="bg-red-100 text-red-800 border border-red-200 font-black px-3 py-1 rounded text-xs block mb-2">DITOLAK</span>
+                            <p class="text-xs text-red-600 italic mb-3 leading-tight line-clamp-2" :title="data.approval.kuisioner.alasan" x-text="data.approval.kuisioner.alasan"></p>
+                            <button @click="ajukanQR('kuisioner')" class="w-full border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold py-1.5 rounded-lg transition">Ajukan Ulang</button>
+                        </div>
+                        
+                        <div x-show="data.approval.kuisioner.status === 'accepted'" class="w-full flex flex-col items-center">
+                            <div class="w-24 h-24 bg-white border border-gray-200 p-1.5 mb-2 rounded-lg shadow-sm">
+                                <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent('{{ url('/approval') }}/' + data.approval.kuisioner.token)" alt="QR Code" class="w-full h-full object-contain">
+                            </div>
+                            <span class="text-emerald-600 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                Verified
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <!-- D. Catatan Mentor -->
@@ -240,9 +324,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- BAGIAN 2: PENILAIAN DOSEN PEMBIMBING       -->
-    <!-- ========================================== -->
+    <!-- BAGIAN 2: PENILAIAN DOSEN PEMBIMBING -->
     <div class="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden mb-8">
         <div class="bg-gray-50 border-b border-gray-200 p-6 md:p-8 flex items-center gap-4">
             <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
@@ -255,13 +337,12 @@
         </div>
 
         <div class="p-6 md:p-8 space-y-8">
-            <!-- Tabel Mutu Presentasi & Makalah -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 <!-- Mutu Presentasi -->
                 <div>
                     <h4 class="text-lg font-bold text-gray-800 mb-4">A. Mutu Presentasi (Skala 0-100)</h4>
-                    <div class="rounded-2xl border border-gray-200 overflow-hidden">
+                    <div class="rounded-2xl border border-gray-200 overflow-hidden mb-4">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-gray-50 text-gray-500 uppercase tracking-wider text-[10px] font-semibold">
                                 <tr>
@@ -283,12 +364,50 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- TTD BOX PRESENTASI -->
+                    @if(auth()->check() && auth()->user()->role == 'mahasiswa')
+                    <div class="flex justify-end mt-5">
+                        <div class="border border-gray-200 bg-gray-50/80 rounded-2xl p-5 w-56 text-center flex flex-col items-center justify-center min-h-[160px] shadow-sm relative">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">TTD PRESENTASI</p>
+                            
+                            <div x-show="['belum_mengajukan'].includes(data.approval.presentasi.status)" class="w-full">
+                                <button @click="ajukanQR('presentasi')" class="w-full bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800 transition shadow-sm mb-2">Ajukan TTD</button>
+                                <span class="text-[10px] text-gray-400 font-medium italic">Belum disahkan</span>
+                            </div>
+                            
+                            <div x-show="data.approval.presentasi.status === 'pending'" class="w-full flex flex-col items-center justify-center">
+                                <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-3">Menunggu Acc</span>
+                                <button @click="batalkanQR('presentasi')" class="flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-full transition-colors shadow-sm" title="Batalkan Pengajuan">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                                <span class="text-[9px] text-gray-400 mt-1">Batal</span>
+                            </div>
+                            
+                            <div x-show="data.approval.presentasi.status === 'rejected'" class="w-full">
+                                <span class="bg-red-100 text-red-800 border border-red-200 font-black px-3 py-1 rounded text-xs block mb-2">DITOLAK</span>
+                                <p class="text-xs text-red-600 italic mb-3 leading-tight line-clamp-2" :title="data.approval.presentasi.alasan" x-text="data.approval.presentasi.alasan"></p>
+                                <button @click="ajukanQR('presentasi')" class="w-full border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold py-1.5 rounded-lg transition">Ajukan Ulang</button>
+                            </div>
+                            
+                            <div x-show="data.approval.presentasi.status === 'accepted'" class="w-full flex flex-col items-center">
+                                <div class="w-24 h-24 bg-white border border-gray-200 p-1.5 mb-2 rounded-lg shadow-sm">
+                                    <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent('{{ url('/approval') }}/' + data.approval.presentasi.token)" alt="QR Code" class="w-full h-full object-contain">
+                                </div>
+                                <span class="text-emerald-600 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    Verified
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
                 <!-- Penulisan Makalah -->
                 <div>
                     <h4 class="text-lg font-bold text-gray-800 mb-4">B. Penulisan Makalah (Skala 0-100)</h4>
-                    <div class="rounded-2xl border border-gray-200 overflow-hidden">
+                    <div class="rounded-2xl border border-gray-200 overflow-hidden mb-4">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-gray-50 text-gray-500 uppercase tracking-wider text-[10px] font-semibold">
                                 <tr>
@@ -310,6 +429,44 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- TTD BOX MAKALAH -->
+                    @if(auth()->check() && auth()->user()->role == 'mahasiswa')
+                    <div class="flex justify-end mt-5">
+                        <div class="border border-gray-200 bg-gray-50/80 rounded-2xl p-5 w-56 text-center flex flex-col items-center justify-center min-h-[160px] shadow-sm relative">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">TTD MAKALAH</p>
+                            
+                            <div x-show="['belum_mengajukan'].includes(data.approval.makalah.status)" class="w-full">
+                                <button @click="ajukanQR('makalah')" class="w-full bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800 transition shadow-sm mb-2">Ajukan TTD</button>
+                                <span class="text-[10px] text-gray-400 font-medium italic">Belum disahkan</span>
+                            </div>
+                            
+                            <div x-show="data.approval.makalah.status === 'pending'" class="w-full flex flex-col items-center justify-center">
+                                <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-3">Menunggu Acc</span>
+                                <button @click="batalkanQR('makalah')" class="flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-full transition-colors shadow-sm" title="Batalkan Pengajuan">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                                <span class="text-[9px] text-gray-400 mt-1">Batal</span>
+                            </div>
+                            
+                            <div x-show="data.approval.makalah.status === 'rejected'" class="w-full">
+                                <span class="bg-red-100 text-red-800 border border-red-200 font-black px-3 py-1 rounded text-xs block mb-2">DITOLAK</span>
+                                <p class="text-xs text-red-600 italic mb-3 leading-tight line-clamp-2" :title="data.approval.makalah.alasan" x-text="data.approval.makalah.alasan"></p>
+                                <button @click="ajukanQR('makalah')" class="w-full border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-xs font-bold py-1.5 rounded-lg transition">Ajukan Ulang</button>
+                            </div>
+                            
+                            <div x-show="data.approval.makalah.status === 'accepted'" class="w-full flex flex-col items-center">
+                                <div class="w-24 h-24 bg-white border border-gray-200 p-1.5 mb-2 rounded-lg shadow-sm">
+                                    <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent('{{ url('/approval') }}/' + data.approval.makalah.token)" alt="QR Code" class="w-full h-full object-contain">
+                                </div>
+                                <span class="text-emerald-600 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    Verified
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -324,9 +481,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- BAGIAN 3: REKAPAN JAM LOGBOOK              -->
-    <!-- ========================================== -->
+    <!-- BAGIAN 3: REKAPAN JAM LOGBOOK -->
     <div class="bg-white rounded-[2rem] border border-gray-200 shadow-sm overflow-hidden mb-8">
         <div class="bg-gray-50 border-b border-gray-200 p-6 md:p-8 flex items-center gap-4">
             <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
@@ -419,6 +574,157 @@
                 this.$nextTick(() => {
                     this.renderChart();
                 });
+                this.refreshLogbookScores();
+                setInterval(() => this.refreshLogbookScores(), 15000);
+            },
+
+            // State Data Mahasiswa & Approval
+            data: {
+                nama: '{{ $mahasiswa->nama_mhs ?? "-" }}',
+                nim: '{{ $mahasiswa->nim ?? "-" }}',
+                statusFinal: '{{ $statusFinal }}',
+                nilaiAkhir: {{ $nilaiAkhir ?? 'null' }},
+                nilaiHuruf: '{{ $nilaiHuruf }}',
+                rekapanJam: {!! json_encode(array_values($rekapanJam)) !!},
+                totalJamKeseluruhan: {{ $totalJamKeseluruhan }},
+                
+                // STATE APPROVAL DINAMIS
+                approval: {
+                    disiplin: { 
+                        status: '{!! $approvals["disiplin"]->status ?? "belum_mengajukan" !!}', 
+                        alasan: '{!! $approvals["disiplin"]->alasan_reject ?? "" !!}', 
+                        token: '{!! $approvals["disiplin"]->token_verifikasi ?? "" !!}' 
+                    },
+                    kuisioner: { 
+                        status: '{!! $approvals["kuisioner"]->status ?? "belum_mengajukan" !!}', 
+                        alasan: '{!! $approvals["kuisioner"]->alasan_reject ?? "" !!}', 
+                        token: '{!! $approvals["kuisioner"]->token_verifikasi ?? "" !!}' 
+                    },
+                    presentasi: { 
+                        status: '{!! $approvals["presentasi"]->status ?? "belum_mengajukan" !!}', 
+                        alasan: '{!! $approvals["presentasi"]->alasan_reject ?? "" !!}', 
+                        token: '{!! $approvals["presentasi"]->token_verifikasi ?? "" !!}' 
+                    },
+                    makalah: { 
+                        status: '{!! $approvals["makalah"]->status ?? "belum_mengajukan" !!}', 
+                        alasan: '{!! $approvals["makalah"]->alasan_reject ?? "" !!}', 
+                        token: '{!! $approvals["makalah"]->token_verifikasi ?? "" !!}' 
+                    }
+                },
+
+                mentor: {
+                    logbook: [
+                        @for($i = 1; $i <= 20; $i++)
+                            @php
+                                $lbMinggu = $logbooks->where('minggu_ke', $i)->whereNotNull('nilai');
+                                if ($lbMinggu->count() > 0) {
+                                    $nilaiLb = round($lbMinggu->avg('nilai'), 2);
+                                    $predikatLb = $lbMinggu->pluck('predikat_nilai')->filter()->first();
+                                } else {
+                                    $nilaiLb = 'null';
+                                    $predikatLb = null;
+                                }
+                            @endphp
+                            { minggu: {{ $i }}, nilai: {{ $nilaiLb }}, predikat: @json($predikatLb) },
+                        @endfor
+                    ],
+                    logbookUpdatedAt: 'Memuat...',
+                    catatan: '{{ $logbooks->where("catatan_mentor", "!=", "")->whereNotNull("catatan_mentor")->last()->catatan_mentor ?? "Tidak ada catatan khusus." }}',
+                    @php
+                        $disiplinList = [];
+                        if ($disiplin && $disiplin->penilaian) {
+                            $dData = json_decode($disiplin->penilaian, true);
+                            if (is_array($dData)) {
+                                foreach ($dData as $k => $v) {
+                                    $disiplinList[] = ['kriteria' => $k, 'nilai' => $v];
+                                }
+                            }
+                        }
+                        
+                        $hardskillList = [];
+                        $softskillList = [];
+                        if ($kuisioner && $kuisioner->penilaian) {
+                            $kData = json_decode($kuisioner->penilaian, true);
+                            if (is_array($kData)) {
+                                foreach ($kData as $k => $v) {
+                                    $isHard = false;
+                                    foreach ($parameters as $param) {
+                                        if ($param->jenis === 'kuisioner_mentor' && $param->sub_kategori === 'HARDSKILL') {
+                                            if (in_array($k, $param->indikator)) {
+                                                $isHard = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if ($isHard) {
+                                        $hardskillList[] = ['kriteria' => $k, 'nilai' => $v];
+                                    } else {
+                                        $softskillList[] = ['kriteria' => $k, 'nilai' => $v];
+                                    }
+                                }
+                            }
+                        }
+                    @endphp
+                    disiplin: {!! json_encode($disiplinList) !!},
+                    hardskill: {!! json_encode($hardskillList) !!},
+                    softskill: {!! json_encode($softskillList) !!}
+                },
+                
+                @php
+                    $presentasiList = [];
+                    $makalahList = [];
+                    
+                    if ($penilaianDosen) {
+                        $detailPres = $penilaianDosen->detail_presentasi ?? [];
+                        $detailMak = $penilaianDosen->detail_makalah ?? [];
+                        
+                        foreach ($parameters as $param) {
+                            if ($param->jenis === 'presentasi' && isset($detailPres[$param->id])) {
+                                foreach ($param->indikator as $index => $indName) {
+                                    $presentasiList[] = [
+                                        'kriteria' => $indName,
+                                        'nilai' => $detailPres[$param->id][$index] ?? 0
+                                    ];
+                                }
+                            } elseif ($param->jenis === 'makalah' && isset($detailMak[$param->id])) {
+                                foreach ($param->indikator as $index => $indName) {
+                                    $makalahList[] = [
+                                        'kriteria' => $indName,
+                                        'nilai' => $detailMak[$param->id][$index] ?? 0
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                @endphp
+                dosen: {
+                    catatan: '-',
+                    presentasi: {!! json_encode($presentasiList) !!},
+                    makalah: {!! json_encode($makalahList) !!}
+                }
+            },
+
+            async refreshLogbookScores() {
+                try {
+                    const response = await fetch('{{ route("mahasiswa.nilai.logbook") }}', {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!response.ok) return;
+
+                    const result = await response.json();
+                    const scoresByWeek = new Map(result.logbook.map(item => [item.minggu, item]));
+                    this.data.mentor.logbook = this.data.mentor.logbook.map(item => {
+                        const score = scoresByWeek.get(item.minggu);
+                        return score
+                            ? { minggu: item.minggu, nilai: Number(score.nilai), predikat: score.predikat || this.getLogbookGrade(Number(score.nilai)) }
+                            : { minggu: item.minggu, nilai: null, predikat: null };
+                    });
+                    this.data.mentor.logbookUpdatedAt = new Date(result.updated_at).toLocaleTimeString('id-ID', {
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
+                } catch (error) {
+                    console.error('Gagal memperbarui nilai logbook:', error);
+                }
             },
             
             renderChart() {
@@ -481,121 +787,131 @@
                 });
             },
             
-            // Data Penilaian Mahasiswa
-            data: {
-                nama: '{{ $mahasiswa->nama_mhs ?? "-" }}',
-                nim: '{{ $mahasiswa->nim ?? "-" }}',
-                statusFinal: '{{ $statusFinal }}',
-                nilaiAkhir: {{ $nilaiAkhir ?? 'null' }},
-                nilaiHuruf: '{{ $nilaiHuruf }}',
-                rekapanJam: {!! json_encode(array_values($rekapanJam)) !!},
-                totalJamKeseluruhan: {{ $totalJamKeseluruhan }},
+// FUNGSI UNTUK REQUEST TTD
+        async ajukanQR(formName) {
+            this.data.approval[formName].status = 'pending';
+            try {
+                const response = await fetch('{{ route("mahasiswa.nilai.ajukan_qr") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ jenis_form: formName })
+                });
+                const result = await response.json();
                 
-                mentor: {
-                    // Array Logbook 20 Minggu
-                    logbook: [
-                        @for($i = 1; $i <= 20; $i++)
-                            @php
-                                $lbMinggu = $logbooks->where('minggu_ke', $i)->whereNotNull('nilai');
-                                if ($lbMinggu->count() > 0) {
-                                    $nilaiLb = round($lbMinggu->avg('nilai'));
-                                } else {
-                                    $nilaiLb = 'null';
-                                }
-                            @endphp
-                            { minggu: {{ $i }}, nilai: {{ $nilaiLb }} },
-                        @endfor
-                    ],
-                    catatan: '{{ $logbooks->where("catatan_mentor", "!=", "")->whereNotNull("catatan_mentor")->last()->catatan_mentor ?? "Tidak ada catatan khusus." }}',
-                    @php
-                        $disiplinList = [];
-                        if ($disiplin && $disiplin->penilaian) {
-                            $dData = json_decode($disiplin->penilaian, true);
-                            if (is_array($dData)) {
-                                foreach ($dData as $k => $v) {
-                                    $disiplinList[] = ['kriteria' => $k, 'nilai' => $v];
-                                }
-                            }
-                        }
-                        
-                        $hardskillList = [];
-                        $softskillList = [];
-                        if ($kuisioner && $kuisioner->penilaian) {
-                            $kData = json_decode($kuisioner->penilaian, true);
-                            if (is_array($kData)) {
-                                foreach ($kData as $k => $v) {
-                                    // Pisahkan berdasarkan jenis, untuk sederhana jika ada di 'HARDSKILL' parameter atau softskill
-                                    // Berhubung formnya dinamis, kita bisa tebak dari pertanyaannya. 
-                                    // Namun KPS sudah mendeclare parameter ini dalam 'kuisioner_mentor' sebagai 'HARDSKILL' dan 'SOFTSKILL' di $parameters.
-                                    // Karena di data JSON cuma array asosiatif rata, kita pisah kasar atau cek param.
-                                    $isHard = false;
-                                    foreach ($parameters as $param) {
-                                        if ($param->jenis === 'kuisioner_mentor' && $param->sub_kategori === 'HARDSKILL') {
-                                            if (in_array($k, $param->indikator)) {
-                                                $isHard = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if ($isHard) {
-                                        $hardskillList[] = ['kriteria' => $k, 'nilai' => $v];
-                                    } else {
-                                        $softskillList[] = ['kriteria' => $k, 'nilai' => $v];
-                                    }
-                                }
-                            }
-                        }
-                    @endphp
-                    disiplin: {!! json_encode($disiplinList) !!},
-                    hardskill: {!! json_encode($hardskillList) !!},
-                    softskill: {!! json_encode($softskillList) !!}
-                },
-                
-                        @php
-                            $presentasiList = [];
-                            $makalahList = [];
-                            
-                            if ($penilaianDosen) {
-                                $detailPres = $penilaianDosen->detail_presentasi ?? [];
-                                $detailMak = $penilaianDosen->detail_makalah ?? [];
-                                
-                                foreach ($parameters as $param) {
-                                    if ($param->jenis === 'presentasi' && isset($detailPres[$param->id])) {
-                                        foreach ($param->indikator as $index => $indName) {
-                                            $presentasiList[] = [
-                                                'kriteria' => $indName,
-                                                'nilai' => $detailPres[$param->id][$index] ?? 0
-                                            ];
-                                        }
-                                    } elseif ($param->jenis === 'makalah' && isset($detailMak[$param->id])) {
-                                        foreach ($param->indikator as $index => $indName) {
-                                            $makalahList[] = [
-                                                'kriteria' => $indName,
-                                                'nilai' => $detailMak[$param->id][$index] ?? 0
-                                            ];
-                                        }
-                                    }
-                                }
-                            }
-                        @endphp
-                dosen: {
-                    catatan: '-',
-                    presentasi: {!! json_encode($presentasiList) !!},
-                    makalah: {!! json_encode($makalahList) !!}
+                if (result.status !== 'success') {
+                    alert(result.message);
+                    this.data.approval[formName].status = 'belum_mengajukan'; 
+                } else {
+                    window.location.reload(); 
                 }
-            },
+            } catch (error) {
+                console.error(error);
+                alert('Terjadi kesalahan jaringan saat mengajukan TTD.');
+                this.data.approval[formName].status = 'belum_mengajukan';
+            }
+        },
 
-            getAverage(arr) {
-                if (!arr || arr.length === 0) return 0;
-                let sum = arr.reduce((total, item) => total + item.nilai, 0);
-                return Number((sum / arr.length).toFixed(1));
-            },
+        // FUNGSI UNTUK MEMBATALKAN TTD DI UPDATE
+        async batalkanQR(formName) {
+            if(!confirm('Apakah Anda yakin ingin membatalkan pengajuan ini?')) return;
+            
+            // Ambil token khusus untuk form ini dari data state
+            const token = this.data.approval[formName].token;
+            
+            this.data.approval[formName].status = 'belum_mengajukan';
+
+            try {
+                // PANGGIL ROUTE BACKEND UNTUK HAPUS DB
+                const response = await fetch('{{ route("mahasiswa.nilai.batal_qr") }}', {
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    // Kirim token ke controller
+                    body: JSON.stringify({ 
+                        jenis_form: formName,
+                        token: token 
+                    })
+                });
+                
+                const result = await response.json();
+                if(result.status !== 'success') {
+                    alert(result.message);
+                }
+                // Refresh agar state bersih dan kembali ke tombol "Ajukan"
+                window.location.reload();
+                
+            } catch (error) {
+                console.error('Gagal batal di database', error);
+                alert('Terjadi kesalahan saat membatalkan pengajuan.');
+                window.location.reload();
+            }
+        },
+
+        // FUNGSI UNTUK RESET QR YANG SUDAH ACC (UNTUK KEPERLUAN TESTING)
+        async resetQR(formName) {
+            if(!confirm('Apakah Anda ingin mereset status Verified ini? Data approval akan dihapus agar mahasiswa bisa mengajukan TTD ulang.')) return;
+            
+            const token = this.data.approval[formName].token;
+
+            try {
+                const response = await fetch('{{ route("mahasiswa.nilai.batal_qr") }}', {
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        jenis_form: formName,
+                        token: token 
+                    })
+                });
+                
+                const result = await response.json();
+                if(result.status !== 'success') {
+                    alert(result.message || 'Gagal mereset pengajuan.');
+                } else {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error('Gagal reset di database', error);
+                alert('Terjadi kesalahan jaringan saat mereset pengajuan.');
+                window.location.reload();
+            }
+        },
+        
+        getAverage(arr) {
+            if (!arr || arr.length === 0) return 0;
+            let sum = arr.reduce((total, item) => total + (parseFloat(item.nilai) || 0), 0);
+            return Number((sum / arr.length).toFixed(1));
+        },
 
             getAverageLogbook() {
                 let validScores = this.data.mentor.logbook.filter(item => item.nilai !== null);
                 if (validScores.length === 0) return 0;
                 let sum = validScores.reduce((total, item) => total + item.nilai, 0);
-                return Number((sum / validScores.length).toFixed(1));
+                return Number((sum / validScores.length).toFixed(2));
+            },
+
+            formatScore(score) {
+                return Number(score).toFixed(2);
+            },
+
+            getLogbookGrade(score) {
+                if (score >= 85) return 'A';
+                if (score >= 80) return 'AB';
+                if (score >= 70) return 'B';
+                if (score >= 65) return 'BC';
+                if (score >= 55) return 'C';
+                if (score >= 40) return 'D';
+                return 'E';
             },
             
             generatePDF() {
@@ -608,7 +924,6 @@
                     jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
                 };
                 
-                // Set loading state / ganti teks tombol jika perlu
                 let btn = event.currentTarget;
                 let originalText = btn.innerHTML;
                 btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...`;

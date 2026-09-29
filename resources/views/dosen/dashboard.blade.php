@@ -41,6 +41,39 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- KOTAK NOTIFIKASI PENGAJUAN TTD DIGITAL     -->
+    <!-- ========================================== -->
+    @if(isset($pendingApprovals) && $pendingApprovals->count() > 0)
+    <div class="bg-white rounded-xl border-2 border-red-200 shadow-sm overflow-hidden mt-8 p-6">
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <!-- Ikon Lonceng/Peringatan -->
+            <svg class="w-6 h-6 text-red-500 animate-pulse" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            Menunggu Persetujuan Tanda Tangan ({{ $pendingApprovals->count() }})
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($pendingApprovals as $approval)
+                <div class="bg-red-50 border-2 border-red-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">NEW</div>
+                    
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">NIM Mahasiswa</p>
+                    <p class="font-bold text-gray-900">{{ $approval->mahasiswa_nim }}</p>
+                    
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mt-3 mb-1">Jenis Dokumen</p>
+                    <p class="font-bold text-blue-600 uppercase">{{ $approval->jenis_form }}</p>
+                    
+                    <!-- Tombol ini akan mengarahkan dosen ke halaman Accept/Reject -->
+                    <a href="{{ route('approval.show', $approval->token_verifikasi) }}" class="mt-4 block w-full text-center bg-gray-900 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-gray-800 transition shadow-sm">
+                        Review & Proses
+                    </a>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+    <!-- ========================================== -->
+
     <!-- Daftar Mahasiswa Bimbingan -->
     <div class="bg-white rounded-xl border-2 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] overflow-hidden mt-8">
         <div class="bg-blue-50 p-4 border-b-2 border-blue-900">

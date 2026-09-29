@@ -114,37 +114,33 @@
                         </div>
                     </div>
 
-                    <!-- KONTEN 1: LOGBOOK (REVISI: BISA BACA DESKRIPSI) -->
+                    <!-- KONTEN 1: LOGBOOK -->
                     <template x-if="activeModal === 'logbook'">
                         <div class="bg-white p-6 rounded-xl border-2 border-blue-900 shadow-[4px_4px_0_0_#1e3a8a]">
                             <div class="flex justify-between items-center border-b-2 border-gray-100 pb-2 mb-4">
-                                <p class="text-sm font-bold text-gray-600">Periksa deskripsi kegiatan mahasiswa (pastikan tidak melanggar NDA) lalu berikan nilai (0-100).</p>
+                                <p class="text-sm font-bold text-gray-600">Periksa deskripsi kegiatan mahasiswa, lalu masukkan nilai 0–100. Anda dapat mengubah nilai kapan saja dengan menekan tombol Simpan.</p>
                             </div>
                             
                             <div class="space-y-4">
-                                <!-- Looping 20 Minggu -->
                                 <template x-for="w in 20" :key="w">
                                     <div class="border-2 border-blue-200 rounded-lg overflow-hidden bg-white" x-data="{ weekExpanded: false }">
                                         
-                                        <!-- Header Minggu (Klik untuk expand tabel) -->
                                         <div class="bg-blue-50 p-3 flex justify-between items-center cursor-pointer hover:bg-blue-100 transition-colors" @click="weekExpanded = !weekExpanded">
                                             <div class="flex items-center gap-3">
                                                 <svg :class="weekExpanded ? 'rotate-90' : ''" class="w-5 h-5 text-blue-800 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                                 <span class="font-black text-blue-900" x-text="'Minggu ke-' + w"></span>
-                                                <!-- Indikator jika ada isinya -->
                                                 <template x-if="hasLogbookData(w)">
                                                     <span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">Ada Data</span>
                                                 </template>
                                             </div>
                                             
-                                            <!-- Input Nilai Mingguan -->
                                             <div class="flex items-center gap-3" @click.stop>
                                                 <label class="text-sm font-bold text-gray-700">Nilai:</label>
-                                                <input type="number" min="0" max="100" placeholder="0" x-model.number="formLogbook[w-1].nilai" class="w-16 border-2 border-blue-300 rounded p-1 text-center font-bold outline-none focus:border-blue-600 text-blue-700">
+                                                <input type="number" min="0" max="100" step="0.01" placeholder="0" x-model.number="formLogbook[w-1].nilai" @input="updateLogbookPredikat(w, $event.target.value)" :disabled="!hasLogbookData(w)" :class="hasLogbookData(w) ? 'bg-white focus:border-blue-600 text-blue-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'" class="w-20 border-2 border-blue-300 rounded p-1.5 text-center font-bold outline-none">
+                                                <span class="min-w-20 px-2 py-1.5 rounded border-2 border-emerald-300 bg-emerald-50 text-center text-sm font-black text-emerald-800" x-text="formLogbook[w-1].predikat || '-'"></span>
                                             </div>
                                         </div>
                                         
-                                        <!-- Tabel Detail Kegiatan Harian -->
                                         <div x-show="weekExpanded" x-collapse class="border-t-2 border-blue-100">
                                             <template x-if="!hasLogbookData(w)">
                                                 <div class="p-4 text-center text-gray-400 font-bold text-sm italic">
@@ -170,7 +166,6 @@
                                                                     <td class="py-3">
                                                                         <span class="bg-blue-900 text-white px-2 py-1 rounded text-xs font-bold" x-text="entry.matkul"></span>
                                                                     </td>
-                                                                    <!-- DESKRIPSI KEGIATAN -->
                                                                     <td class="py-3 text-gray-800 font-medium leading-relaxed pr-4" x-text="entry.deskripsi"></td>
                                                                     <td class="py-3 text-center font-black text-blue-700" x-text="entry.durasiTotal + ' J'"></td>
                                                                 </tr>
@@ -190,20 +185,29 @@
                     <!-- KONTEN 2: DISIPLIN & PRESTASI -->
                     <template x-if="activeModal === 'disiplin'">
                         <div class="bg-white p-5 md:p-8 rounded-xl border-4 border-purple-900 shadow-[6px_6px_0_0_#581c87]">
-                            <h3 class="text-2xl font-black text-purple-900 mb-6 border-l-4 border-purple-500 pl-3">Form Disiplin & Prestasi</h3>
-
-                            <!-- Jika sudah pernah menilai -->
-                            <div x-show="selectedStudent.dataDisiplin" class="mb-6 p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div class="w-full">
-                                    <h4 class="font-black text-emerald-900">Sudah Dinilai</h4>
-                                    <p class="text-sm font-medium text-emerald-700 mb-3">Anda sudah memberikan penilaian untuk form ini.</p>
-                                    <div class="bg-white border border-emerald-200 rounded-lg p-4 space-y-3" x-html="renderSaranTeks(selectedStudent.dataDisiplin.penilaian)"></div>
-                                </div>
+                            <div class="flex justify-between items-center mb-6 border-l-4 border-purple-500 pl-3">
+                                <h3 class="text-2xl font-black text-purple-900">Form Disiplin & Prestasi</h3>
+                                <button type="button" x-show="selectedStudent.dataDisiplin && !isEditingDisiplin" @click="enableEditDisiplin()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-black px-3 py-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000]">
+                                    Edit Nilai
+                                </button>
                             </div>
 
-                            <!-- Form -->
-                            <form x-show="!selectedStudent.dataDisiplin" @submit.prevent="saveData('disiplin')" class="space-y-4">
+                            <!-- Tampilan Status Sudah Dinilai -->
+                            <template x-if="selectedStudent.dataDisiplin && !isEditingDisiplin">
+                                <div class="space-y-4">
+                                    <div class="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-start gap-3">
+                                        <svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div class="w-full">
+                                            <h4 class="font-black text-emerald-900">Sudah Dinilai</h4>
+                                            <p class="text-sm font-medium text-emerald-700 mb-3">Anda sudah memberikan penilaian untuk form ini. Klik tombol "Edit Nilai" di atas jika ingin mengubahnya.</p>
+                                            <div class="bg-white border border-emerald-200 rounded-lg p-4 space-y-3" x-html="renderSaranTeks(selectedStudent.dataDisiplin.penilaian)"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Form Input / Edit -->
+                            <form x-show="!selectedStudent.dataDisiplin || isEditingDisiplin" @submit.prevent="saveData('disiplin')" class="space-y-4">
                                 <template x-if="parameterDisiplin && parameterDisiplin.length > 0">
                                     <div class="space-y-4">
                                         <template x-for="param in parameterDisiplin" :key="param.id">
@@ -231,7 +235,12 @@
                     <!-- KONTEN 3: KUISIONER -->
                     <template x-if="activeModal === 'kuisioner'">
                         <div class="bg-white p-5 md:p-8 rounded-xl border-4 border-emerald-900 shadow-[6px_6px_0_0_#064e3b]">
-                            <h3 class="text-2xl font-black text-emerald-900 mb-6 border-l-4 border-emerald-500 pl-3">Evaluasi Kuisioner</h3>
+                            <div class="flex justify-between items-center mb-6 border-l-4 border-emerald-500 pl-3">
+                                <h3 class="text-2xl font-black text-emerald-900">Evaluasi Kuisioner</h3>
+                                <button type="button" x-show="selectedStudent.dataKuisioner && !isEditingKuisioner" @click="enableEditKuisioner()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-black px-3 py-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000]">
+                                    Edit Nilai
+                                </button>
+                            </div>
                             
                             <div class="flex flex-wrap items-center gap-4 border-b-2 border-gray-200 pb-2 mb-4">
                                 <span class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded text-xs border border-blue-300">4: Sangat Baik</span>
@@ -240,18 +249,22 @@
                                 <span class="bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded text-xs border border-blue-300">1: Kurang</span>
                             </div>
 
-                            <!-- Jika sudah pernah menilai -->
-                            <div x-show="selectedStudent.dataKuisioner" class="mb-6 p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-start gap-3">
-                                <svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div class="w-full">
-                                    <h4 class="font-black text-emerald-900">Sudah Dinilai</h4>
-                                    <p class="text-sm font-medium text-emerald-700 mb-3">Anda sudah memberikan penilaian untuk form ini.</p>
-                                    <div class="bg-white border border-emerald-200 rounded-lg p-4 space-y-3" x-html="renderSaranTeks(selectedStudent.dataKuisioner.penilaian)"></div>
+                            <!-- Tampilan Status Sudah Dinilai -->
+                            <template x-if="selectedStudent.dataKuisioner && !isEditingKuisioner">
+                                <div class="space-y-4">
+                                    <div class="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-start gap-3">
+                                        <svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div class="w-full">
+                                            <h4 class="font-black text-emerald-900">Sudah Dinilai</h4>
+                                            <p class="text-sm font-medium text-emerald-700 mb-3">Anda sudah memberikan penilaian untuk form ini. Klik tombol "Edit Nilai" di atas jika ingin mengubahnya.</p>
+                                            <div class="bg-white border border-emerald-200 rounded-lg p-4 space-y-3" x-html="renderSaranTeks(selectedStudent.dataKuisioner.penilaian)"></div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
 
-                            <!-- Form -->
-                            <form x-show="!selectedStudent.dataKuisioner" @submit.prevent="saveData('kuisioner')" class="space-y-4">
+                            <!-- Form Input / Edit -->
+                            <form x-show="!selectedStudent.dataKuisioner || isEditingKuisioner" @submit.prevent="saveData('kuisioner')" class="space-y-4">
                                 <template x-if="parameterKuisioner && parameterKuisioner.length > 0">
                                     <div class="space-y-4">
                                         <template x-for="param in parameterKuisioner" :key="param.id">
@@ -285,27 +298,34 @@
                     <!-- KONTEN 4: SARAN MAHASISWA -->
                     <template x-if="activeModal === 'saran'">
                         <div class="bg-white p-5 md:p-8 rounded-xl border-4 border-yellow-500 shadow-[6px_6px_0_0_#eab308] relative overflow-hidden">
-                            <!-- Dekorasi -->
                             <div class="absolute -right-6 -top-6 opacity-10 pointer-events-none">
                                 <svg class="w-32 h-32 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                             </div>
                             
                             <div class="relative z-10">
-                                <h3 class="text-2xl font-black text-yellow-700 mb-6 border-l-4 border-yellow-400 pl-3">Saran & Masukan untuk Mahasiswa</h3>
-
-                                <!-- Jika sudah pernah mengirim saran -->
-                                <div x-show="selectedStudent.saran_mentor" class="mb-6 p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-start gap-3">
-                                    <svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <div class="w-full">
-                                        <h4 class="font-black text-emerald-900">Saran Sudah Dikirim</h4>
-                                        <p class="text-sm font-medium text-emerald-700 mb-3">Anda sudah memberikan saran dan masukan untuk mahasiswa ini.</p>
-                                        
-                                        <div class="bg-white border border-emerald-200 rounded-lg p-4 space-y-3" x-html="renderSaranTeks(selectedStudent.saran_mentor_teks)"></div>
-                                    </div>
+                                <div class="flex justify-between items-center mb-6 border-l-4 border-yellow-400 pl-3">
+                                    <h3 class="text-2xl font-black text-yellow-700">Saran & Masukan untuk Mahasiswa</h3>
+                                    <button type="button" x-show="selectedStudent.saran_mentor && !isEditingSaran" @click="enableEditSaran()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-black px-3 py-1.5 rounded-lg border-2 border-black shadow-[2px_2px_0_0_#000]">
+                                        Edit Saran
+                                    </button>
                                 </div>
 
-                                <!-- Form Saran -->
-                                <form x-show="!selectedStudent.saran_mentor" @submit.prevent="submitSaranMentor()" class="space-y-4">
+                                <!-- Tampilan Status Sudah Dikirim -->
+                                <template x-if="selectedStudent.saran_mentor && !isEditingSaran">
+                                    <div class="space-y-4">
+                                        <div class="p-4 bg-emerald-50 border-2 border-emerald-400 rounded-xl flex items-start gap-3">
+                                            <svg class="w-6 h-6 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <div class="w-full">
+                                                <h4 class="font-black text-emerald-900">Saran Sudah Dikirim</h4>
+                                                <p class="text-sm font-medium text-emerald-700 mb-3">Anda sudah memberikan saran untuk mahasiswa ini. Klik tombol "Edit Saran" di atas jika ingin mengubahnya.</p>
+                                                <div class="bg-white border border-emerald-200 rounded-lg p-4 space-y-3" x-html="renderSaranTeks(selectedStudent.saran_mentor_teks)"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Form Saran / Edit -->
+                                <form x-show="!selectedStudent.saran_mentor || isEditingSaran" @submit.prevent="submitSaranMentor()" class="space-y-4">
                                     <div class="mb-4">
                                         <label class="block text-xs font-black text-yellow-900 uppercase mb-1">Tanggal</label>
                                         <input type="date" x-model="formSaran.tanggal" required class="w-full md:w-1/2 border-2 border-yellow-300 rounded-lg p-2 font-bold focus:border-yellow-600 outline-none">
@@ -337,8 +357,8 @@
                                     </template>
                                     <div class="flex justify-end mt-4">
                                         <button type="submit" :disabled="isSubmitting" class="bg-yellow-400 text-yellow-950 font-black py-2.5 px-6 rounded-xl border-4 border-yellow-600 shadow-[4px_4px_0_0_#ca8a04] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all flex items-center gap-2 disabled:opacity-50">
-                                            <span x-show="!isSubmitting">Kirim Saran</span>
-                                            <span x-show="isSubmitting">Mengirim...</span>
+                                            <span x-show="!isSubmitting">Kirim / Perbarui Saran</span>
+                                            <span x-show="isSubmitting">Menyimpan...</span>
                                         </button>
                                     </div>
                                 </form>
@@ -405,7 +425,7 @@
                         </div>
                     </template>
                     
-                    <!-- KONTEN 6: TRANSKRIP FULL (IFRAME) -->
+                    <!-- KONTEN 6: TRANSKRIP FULL -->
                     <template x-if="activeModal === 'transkrip_full'">
                         <div class="h-[75vh] w-full rounded-xl overflow-hidden border-2 border-cyan-900 shadow-sm relative bg-white">
                             <div x-show="iframeLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
@@ -419,10 +439,10 @@
 
                 <!-- Footer Modal -->
                 <div class="bg-gray-200 border-t-2 border-gray-300 p-4 flex justify-end flex-shrink-0 rounded-b-xl">
-                    <button x-show="activeModal !== 'saran' && activeModal !== 'rekapan' && activeModal !== 'transkrip_full'" @click="saveData()" class="bg-green-500 text-white font-black px-8 py-3 rounded-xl border-2 border-green-900 shadow-[4px_4px_0_0_#14532d] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-lg">
+                    <button x-show="activeModal === 'logbook' || (activeModal === 'disiplin' && (!selectedStudent.dataDisiplin || isEditingDisiplin)) || (activeModal === 'kuisioner' && (!selectedStudent.dataKuisioner || isEditingKuisioner))" @click="saveData()" class="bg-green-500 text-white font-black px-8 py-3 rounded-xl border-2 border-green-900 shadow-[4px_4px_0_0_#14532d] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-lg">
                         Simpan Penilaian
                     </button>
-                    <button x-show="activeModal === 'saran' || activeModal === 'rekapan' || activeModal === 'transkrip_full'" @click="closeModal()" class="bg-gray-500 text-white font-black px-8 py-3 rounded-xl border-2 border-gray-800 shadow-[4px_4px_0_0_#1f2937] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-lg">
+                    <button x-show="activeModal === 'saran' || activeModal === 'rekapan' || activeModal === 'transkrip_full' || (activeModal === 'disiplin' && selectedStudent.dataDisiplin && !isEditingDisiplin) || (activeModal === 'kuisioner' && selectedStudent.dataKuisioner && !isEditingKuisioner)" @click="closeModal()" class="bg-gray-500 text-white font-black px-8 py-3 rounded-xl border-2 border-gray-800 shadow-[4px_4px_0_0_#1f2937] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all text-lg">
                         Tutup
                     </button>
                 </div>
@@ -436,16 +456,20 @@
 <script>
     function mentorApp(serverStudents = [], serverSaranMentor = [], serverDisiplin = [], serverKuisioner = []) {
         return {
-            activeModal: null, // 'logbook', 'disiplin', 'kuisioner'
+            activeModal: null, 
             selectedStudent: null,
             rekapanData: null,
             rekapanLoading: false,
             iframeLoading: true,
             
+            // Edit flags
+            isEditingDisiplin: false,
+            isEditingKuisioner: false,
+            isEditingSaran: false,
+
             students: [],
 
             init() {
-                // Konversi ke array jika berupa object (karena PHP json_encode associative array menjadi object)
                 const studentsArray = Array.isArray(serverStudents) ? serverStudents : Object.values(serverStudents);
                 
                 if (studentsArray.length > 0) {
@@ -459,9 +483,24 @@
                             deskripsi: l.kegiatan,
                             durasiTotal: l.durasi_mnt ? ((l.durasi_mnt || 0) / 60).toFixed(1) : '0.0',
                             status: l.status,
+                            nilai: l.nilai,
+                            predikat_nilai: l.predikat_nilai,
                             catatan_mentor: l.catatan_mentor,
                             fotos: (l.fotos || []).map(f => f.foto_path)
                         }));
+                        let nilaiLogbook = Array.from({ length: 20 }, () => ({ status: 'Dinilai', catatan_mentor: '', nilai: null, predikat: '' }));
+                        dataLogbookStudent.forEach(logbook => {
+                            const weekIndex = logbook.minggu - 1;
+                            if (weekIndex < 0 || weekIndex >= nilaiLogbook.length || logbook.nilai === null || logbook.nilai === undefined) return;
+
+                            nilaiLogbook[weekIndex] = {
+                                status: 'Dinilai',
+                                catatan_mentor: logbook.catatan_mentor || '',
+                                nilai: logbook.nilai,
+                                predikat: logbook.predikat_nilai || this.getGradeCodeForScore(logbook.nilai)
+                            };
+                        });
+
                         return {
                             id: mhs.id_mhs || mhs.nim,
                             name: mhs.nama_mhs,
@@ -473,7 +512,7 @@
                             dataKuisioner: (mhs.kuisioner_mentors && mhs.kuisioner_mentors.length > 0 && mhs.kuisioner_mentors[0].penilaian) ? mhs.kuisioner_mentors[0] : null,
                             saran_mentor: (mhs.saran_mahasiswas && mhs.saran_mahasiswas.length > 0),
                             saran_mentor_teks: (mhs.saran_mahasiswas && mhs.saran_mahasiswas.length > 0) ? mhs.saran_mahasiswas[0].saran : '',
-                            nilaiLogbook: Array.from({ length: 20 }, () => ({ status: 'Dinilai', catatan_mentor: '', nilai: null }))
+                            nilaiLogbook: nilaiLogbook
                         };
                     });
                 } else {
@@ -481,8 +520,7 @@
                 }
             },
 
-            // State Form Modal
-            formLogbook: Array.from({ length: 20 }, () => ({ status: 'Dinilai', catatan_mentor: '', nilai: null })),
+            formLogbook: Array.from({ length: 20 }, () => ({ status: 'Dinilai', catatan_mentor: '', nilai: null, predikat: '' })),
             formDisiplin: { answers: {} },
             formKuisioner: { answers: {} },
             parameterSaranMentor: Array.isArray(serverSaranMentor) ? serverSaranMentor : Object.values(serverSaranMentor || {}),
@@ -505,8 +543,12 @@
                 this.activeModal = type;
                 this.selectedStudent = student;
                 this.iframeLoading = true;
+                
+                // Reset edit flags
+                this.isEditingDisiplin = false;
+                this.isEditingKuisioner = false;
+                this.isEditingSaran = false;
 
-                // Load Data yang sudah pernah di-save
                 if(type === 'logbook') {
                     this.formLogbook = [...student.nilaiLogbook];
                 } else if(type === 'disiplin') {
@@ -533,15 +575,56 @@
             closeModal() {
                 this.activeModal = null;
                 this.selectedStudent = null;
+                this.isEditingDisiplin = false;
+                this.isEditingKuisioner = false;
+                this.isEditingSaran = false;
             },
 
-            // Cek apakah mahasiswa punya data logbook di minggu ke-w
+            enableEditDisiplin() {
+                if (confirm('Apakah Anda ingin mengedit nilai mahasiswa ini?')) {
+                    this.isEditingDisiplin = true;
+                    try {
+                        const existing = JSON.parse(this.selectedStudent.dataDisiplin.penilaian);
+                        this.formDisiplin.answers = { ...existing };
+                    } catch(e) {
+                        this.formDisiplin.answers = {};
+                    }
+                }
+            },
+
+            enableEditKuisioner() {
+                if (confirm('Apakah Anda ingin mengedit nilai kuisioner mahasiswa ini?')) {
+                    this.isEditingKuisioner = true;
+                    try {
+                        const existing = JSON.parse(this.selectedStudent.dataKuisioner.penilaian);
+                        this.formKuisioner.answers = { ...existing };
+                    } catch(e) {
+                        this.formKuisioner.answers = {};
+                    }
+                }
+            },
+
+            enableEditSaran() {
+                if (confirm('Apakah Anda ingin mengedit saran untuk mahasiswa ini?')) {
+                    this.isEditingSaran = true;
+                    try {
+                        const existing = JSON.parse(this.selectedStudent.saran_mentor_teks);
+                        if (typeof existing === 'object' && existing !== null) {
+                            this.formSaran.answers = { ...existing };
+                        } else {
+                            this.formSaran.saran = this.selectedStudent.saran_mentor_teks;
+                        }
+                    } catch(e) {
+                        this.formSaran.saran = this.selectedStudent.saran_mentor_teks;
+                    }
+                }
+            },
+
             hasLogbookData(weekNum) {
                 if(!this.selectedStudent) return false;
                 return this.selectedStudent.dataLogbookStudent.some(entry => entry.minggu === weekNum);
             },
 
-            // Mengambil daftar kegiatan mahasiswa di minggu ke-w
             getLogbookData(weekNum) {
                 if(!this.selectedStudent) return [];
                 return this.selectedStudent.dataLogbookStudent.filter(entry => entry.minggu === weekNum);
@@ -553,25 +636,33 @@
                 return new Date(dateString).toLocaleDateString('id-ID', options);
             },
 
+            getGradeCodeForScore(score) {
+                const numericScore = Number(score);
+                if (numericScore >= 85) return 'A';
+                if (numericScore >= 80) return 'AB';
+                if (numericScore >= 70) return 'B';
+                if (numericScore >= 65) return 'BC';
+                if (numericScore >= 55) return 'C';
+                if (numericScore >= 40) return 'D';
+                return 'E';
+            },
+
+            updateLogbookPredikat(weekNumber, nilai) {
+                const formEntry = this.formLogbook[weekNumber - 1];
+                formEntry.predikat = nilai === null || nilai === '' ? '' : this.getGradeCodeForScore(nilai);
+            },
+
             renderRekapanChart() {
                 if(!this.rekapanData || this.rekapanData.rekapanJam.length === 0) return;
-                
                 let canvas = document.getElementById('mentorRekapanChart');
                 if(!canvas) return;
-                
-                if(window.mentorRekapanChartObj) {
-                    window.mentorRekapanChartObj.destroy();
-                }
+                if(window.mentorRekapanChartObj) { window.mentorRekapanChartObj.destroy(); }
                 
                 const ctx = canvas.getContext('2d');
                 const labels = [];
                 const dataPoints = [];
                 const backgroundColors = [];
-                
-                const colors = [
-                    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
-                    '#ec4899', '#06b6d4', '#84cc16', '#f43f5e', '#6366f1'
-                ];
+                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f43f5e', '#6366f1'];
                 
                 this.rekapanData.rekapanJam.forEach((item, index) => {
                     labels.push(item.kode + ' - ' + item.nama);
@@ -581,42 +672,21 @@
                 
                 window.mentorRekapanChartObj = new Chart(ctx, {
                     type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: dataPoints,
-                            backgroundColor: backgroundColors,
-                            borderWidth: 1,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Total Jam Logbook per Mata Kuliah',
-                                font: { size: 16 }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        if (label) label += ': ';
-                                        if (context.parsed !== null) label += context.parsed + ' Jam';
-                                        return label;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    data: { labels: labels, datasets: [{ data: dataPoints, backgroundColor: backgroundColors, borderWidth: 1, borderColor: '#ffffff' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Total Jam Logbook per Mata Kuliah', font: { size: 16 } } } }
                 });
             },
 
+            async saveData(forcedType = null) {
+                let typeToSave = forcedType || this.activeModal;
 
-            async saveData() {
-                if(this.activeModal === 'logbook') {
+                if (typeToSave === 'disiplin' || typeToSave === 'kuisioner') {
+                    if (!confirm('Apakah Anda ingin menyimpan/memperbarui penilaian mahasiswa ini?')) {
+                        return;
+                    }
+                }
+
+                if(typeToSave === 'logbook') {
                     try {
                         let validLogbooks = this.selectedStudent.dataLogbookStudent.map(l => {
                             let weekIndex = l.minggu - 1;
@@ -636,22 +706,19 @@
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({
-                                nim: this.selectedStudent.nim,
-                                logbooks: validLogbooks
-                            })
+                            body: JSON.stringify({ nim: this.selectedStudent.nim, logbooks: validLogbooks })
                         });
                         let data = await res.json();
                         if (res.ok) {
                             this.selectedStudent.nilaiLogbook = [...this.formLogbook];
                             this.selectedStudent.status = 'Selesai';
-                            alert(data.message || `Data ${this.getModalTitle()} untuk ${this.selectedStudent.name} berhasil disimpan!`);
+                            alert(data.message || 'Evaluasi Logbook berhasil disimpan!');
                             this.closeModal();
                         } else {
                             alert(data.message || 'Gagal menyimpan evaluasi logbook');
                         }
                     } catch (e) { console.error(e); }
-                } else if(this.activeModal === 'disiplin') {
+                } else if(typeToSave === 'disiplin') {
                     try {
                         let res = await fetch('{{ route("mentor.disiplin.store") }}', {
                             method: 'POST',
@@ -660,21 +727,19 @@
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({
-                                nim: this.selectedStudent.nim,
-                                penilaian: JSON.stringify(this.formDisiplin.answers)
-                            })
+                            body: JSON.stringify({ nim: this.selectedStudent.nim, penilaian: JSON.stringify(this.formDisiplin.answers) })
                         });
                         let data = await res.json();
                         if (res.ok) {
                             this.selectedStudent.dataDisiplin = { penilaian: JSON.stringify(this.formDisiplin.answers) };
+                            this.isEditingDisiplin = false;
                             alert(data.message);
                             this.closeModal();
                         } else {
                             alert(data.message);
                         }
                     } catch (e) { console.error(e); }
-                } else if(this.activeModal === 'kuisioner') {
+                } else if(typeToSave === 'kuisioner') {
                     try {
                         let res = await fetch('{{ route("mentor.kuisioner.store") }}', {
                             method: 'POST',
@@ -683,14 +748,12 @@
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({
-                                nim: this.selectedStudent.nim,
-                                penilaian: JSON.stringify(this.formKuisioner.answers)
-                            })
+                            body: JSON.stringify({ nim: this.selectedStudent.nim, penilaian: JSON.stringify(this.formKuisioner.answers) })
                         });
                         let data = await res.json();
                         if (res.ok) {
                             this.selectedStudent.dataKuisioner = { penilaian: JSON.stringify(this.formKuisioner.answers) };
+                            this.isEditingKuisioner = false;
                             alert(data.message);
                             this.closeModal();
                         } else {
@@ -702,6 +765,11 @@
 
             async submitSaranMentor() {
                 if (!this.selectedStudent) return;
+                
+                if (!confirm('Apakah Anda ingin mengirim/memperbarui saran untuk mahasiswa ini?')) {
+                    return;
+                }
+
                 this.isSubmitting = true;
 
                 let finalSaran = '';
@@ -734,11 +802,13 @@
                     if (!response.ok) {
                         alert(result.message || 'Gagal mengirim saran.');
                     } else {
-                        alert(result.message || 'Saran berhasil dikirim.');
+                        alert(result.message || 'Saran berhasil disimpan.');
                         this.selectedStudent.saran_mentor = true;
                         this.selectedStudent.saran_mentor_teks = finalSaran;
-                        this.formSaran.saran = ''; // reset form
+                        this.isEditingSaran = false;
+                        this.formSaran.saran = ''; 
                         this.formSaran.answers = {};
+                        this.closeModal();
                     }
                 } catch (error) {
                     console.error('Error submitting saran:', error);
@@ -760,7 +830,6 @@
                         return html;
                     }
                 } catch (e) {
-                    // Not JSON
                     return `<p class="text-gray-700 italic">${teks}</p>`;
                 }
                 return `<p class="text-gray-700 italic">${teks}</p>`;

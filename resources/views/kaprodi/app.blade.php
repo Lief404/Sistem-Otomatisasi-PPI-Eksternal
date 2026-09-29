@@ -43,6 +43,7 @@
                             <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap font-semibold">Manajemen Formulir</span>
                         </a>
                     </li>
+                    <li><a href="{{ route('kaprodi.export') }}" class="flex items-center py-3 rounded-md transition group {{ Request::is('kaprodi/export*') ? 'bg-blue-900' : 'hover:bg-blue-700' }}" :class="sidebarOpen ? 'px-4' : 'justify-center px-0'"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg><span x-show="sidebarOpen" class="ml-3 whitespace-nowrap font-semibold">Ekspor Transkrip</span></a></li>
                 </ul>
             </nav>
         </aside>

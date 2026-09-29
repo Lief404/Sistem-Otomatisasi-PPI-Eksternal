@@ -176,7 +176,7 @@
                             <span class="text-xs font-black text-gray-500 uppercase pl-2">Tanggal:</span>
                             <input type="date" x-model="week.startDate" @change="onWeekDateChange(week)" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
                             <span class="text-gray-300 font-bold">-</span>
-                            <input type="date" x-model="week.endDate" @change="saveWeekDatesToStorage()" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
+                            <input type="date" x-model="week.endDate" @change="onWeekEndDateChange(week)" :min="week.startDate ? addDays(week.startDate, 4) : null" :max="week.startDate ? addDays(week.startDate, 6) : null" class="bg-transparent border-none text-sm font-bold text-gray-800 outline-none w-[130px] cursor-pointer">
                         </div>
                         <div class="bg-white border-2 border-blue-900 p-2 rounded-lg text-blue-900 shadow-[2px_2px_0_0_#1e3a8a] group-hover:translate-y-px group-hover:translate-x-px group-hover:shadow-none transition-all hidden sm:block cursor-pointer">
                             <svg :class="week.expanded ? 'rotate-180' : ''" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
@@ -210,7 +210,10 @@
                                         <div class="p-1 rounded text-gray-400 group-hover:text-gray-800 transition-colors">
                                             <svg :class="day.expanded ? 'rotate-90 text-gray-800' : ''" class="w-6 h-6 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
                                         </div>
-                                        <h4 class="text-lg font-black text-gray-800 w-20" x-text="day.name"></h4>
+                                        <div>
+                                            <h4 class="text-lg font-black text-gray-800" x-text="day.name"></h4>
+                                            <p class="text-xs font-bold text-gray-400" x-text="formatDisplayDate(day.date)"></p>
+                                        </div>
                                         
                                         <!-- Indikator Status Neo-Brutal -->
                                         <span class="px-3 py-1 text-xs font-black uppercase tracking-widest rounded border-2" 
@@ -503,6 +506,61 @@
                 return `${y}-${m}-${day}`;
             },
 
+            getDayName(dateStr, fallbackIndex = 0) {
+                const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                if (!dateStr) return ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'][fallbackIndex] || '';
+                const parts = dateStr.split('-');
+                const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                return dayNames[date.getDay()];
+            },
+
+            formatDisplayDate(dateStr) {
+                if (!dateStr) return '';
+                const parts = dateStr.split('-');
+                const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            },
+
+            getWeekDayCount(startDate, endDate) {
+                if (!startDate || !endDate) return 5;
+                const start = new Date(`${startDate}T00:00:00`);
+                const end = new Date(`${endDate}T00:00:00`);
+                const count = Math.round((end - start) / 86400000) + 1;
+                return count >= 5 && count <= 7 ? count : 5;
+            },
+
+            createEmptyDay(index, dateStr = '') {
+                return {
+                    id: index,
+                    date: dateStr,
+                    name: this.getDayName(dateStr, index),
+                    status: 'Kerja',
+                    notes: '',
+                    expanded: false,
+                    activities: [this.emptyActivity()],
+                    fotos: [],
+                    fotoPreviews: [],
+                    fotoFiles: [],
+                    uploadingFoto: false,
+                };
+            },
+
+            syncWeekDays(week) {
+                const dayCount = this.getWeekDayCount(week.startDate, week.endDate);
+                week.days = week.days.slice(0, dayCount);
+
+                for (let index = 0; index < dayCount; index++) {
+                    const date = week.startDate ? this.addDays(week.startDate, index) : '';
+                    if (!week.days[index]) {
+                        week.days.push(this.createEmptyDay(index, date));
+                    } else {
+                        week.days[index].id = index;
+                        week.days[index].date = date;
+                        week.days[index].name = this.getDayName(date, index);
+                    }
+                }
+            },
+
             saveWeekDatesToStorage() {
                 if (!this.currentNim) return;
                 let dates = {};
@@ -520,12 +578,28 @@
                 if (week.startDate) {
                     week.endDate = this.addDays(week.startDate, 4);
                 }
+                this.syncWeekDays(week);
+                this.saveWeekDatesToStorage();
+            },
+
+            onWeekEndDateChange(week) {
+                if (!week.startDate) {
+                    week.endDate = '';
+                    alert('Pilih tanggal mulai terlebih dahulu.');
+                    return;
+                }
+
+                const minEndDate = this.addDays(week.startDate, 4);
+                const maxEndDate = this.addDays(week.startDate, 6);
+                if (!week.endDate || week.endDate < minEndDate || week.endDate > maxEndDate) {
+                    week.endDate = minEndDate;
+                    alert('Rentang logbook harus 5 sampai 7 hari (maksimal 7 hari).');
+                }
+                this.syncWeekDays(week);
                 this.saveWeekDatesToStorage();
             },
             
             init() {
-                const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
-                
                 let savedWeekDates = {};
                 if (this.currentNim) {
                     try {
@@ -536,6 +610,7 @@
                 // Group logbook entries by date (YYYY-MM-DD) and by minggu_ke
                 const logbooksByDate = {};
                 const weekStartFromLogbook = {};
+                const weekEndFromLogbook = {};
                 const weekDataFromLogbook = {};
 
                 if (Array.isArray(existingLogbooks)) {
@@ -549,6 +624,9 @@
                             if (item.minggu_ke) {
                                 if (!weekStartFromLogbook[item.minggu_ke] || item.tanggal < weekStartFromLogbook[item.minggu_ke]) {
                                     weekStartFromLogbook[item.minggu_ke] = item.tanggal;
+                                }
+                                if (!weekEndFromLogbook[item.minggu_ke] || item.tanggal > weekEndFromLogbook[item.minggu_ke]) {
+                                    weekEndFromLogbook[item.minggu_ke] = item.tanggal;
                                 }
                                 
                                 if (!weekDataFromLogbook[item.minggu_ke]) {
@@ -567,10 +645,14 @@
 
                 for (let i = 1; i <= 20; i++) {
                     let weekStartDate = savedWeekDates[i]?.startDate || weekStartFromLogbook[i] || '';
-                    let weekEndDate = savedWeekDates[i]?.endDate || (weekStartDate ? this.addDays(weekStartDate, 4) : '');
+                    let weekEndDate = savedWeekDates[i]?.endDate || weekEndFromLogbook[i] || (weekStartDate ? this.addDays(weekStartDate, 4) : '');
+                    const dayCount = this.getWeekDayCount(weekStartDate, weekEndDate);
+                    if (weekStartDate && this.getWeekDayCount(weekStartDate, weekEndDate) === 5 && weekEndDate !== this.addDays(weekStartDate, 4)) {
+                        weekEndDate = this.addDays(weekStartDate, 4);
+                    }
 
                     let daysArr = [];
-                    for (let d = 0; d < 5; d++) {
+                    for (let d = 0; d < dayCount; d++) {
                         let dayDateStr = weekStartDate ? this.addDays(weekStartDate, d) : '';
                         let dayStatus = 'Kerja';
                         let dayNotes = '';
@@ -621,7 +703,8 @@
 
                         daysArr.push({
                             id: d,
-                            name: dayNames[d],
+                            date: dayDateStr,
+                            name: this.getDayName(dayDateStr, d),
                             status: dayStatus,
                             notes: dayNotes,
                             expanded: false,
@@ -760,7 +843,7 @@
                     return;
                 }
 
-                let formattedDate = this.addDays(week.startDate, dIndex);
+                let formattedDate = day.date || this.addDays(week.startDate, dIndex);
                 if (!formattedDate) {
                     alert('Format tanggal mulai minggu tidak valid.');
                     return;

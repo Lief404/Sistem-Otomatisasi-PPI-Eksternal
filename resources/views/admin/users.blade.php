@@ -26,7 +26,7 @@
     <div class="bg-white rounded-xl border-2 border-blue-900 shadow-[6px_6px_0_0_#1e3a8a] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
         
         <!-- SIDEBAR FILTER (Kiri) -->
-        <div class="w-full md:w-64 bg-blue-50 border-r-2 border-blue-200 p-4 flex flex-col gap-6 flex-shrink-0">
+        <div class="w-full md:w-72 bg-blue-50 border-r-2 border-blue-200 p-4 flex flex-col gap-6 flex-shrink-0">
             
             <!-- Kategori Role Utama -->
             <div>
@@ -53,26 +53,62 @@
                 </div>
             </div>
 
-            <!-- Sub-Filter (Hanya muncul jika role = Mahasiswa) -->
-            <div x-show="activeRole === 'mahasiswa'" x-transition>
-                <p class="text-xs font-black text-blue-900 uppercase tracking-widest mb-3 border-b-2 border-blue-200 pb-1">Filter Program Studi</p>
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
-                        <input type="radio" name="prodi" value="ALL" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                        <span class="font-bold text-sm text-gray-700">Semua Prodi</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
-                        <input type="radio" name="prodi" value="TRIN" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                        <span class="font-bold text-sm text-gray-700">TRIN (Informatika)</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
-                        <input type="radio" name="prodi" value="TRO" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                        <span class="font-bold text-sm text-gray-700">TRO (Otomasi)</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
-                        <input type="radio" name="prodi" value="TRMO" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                        <span class="font-bold text-sm text-gray-700">TRMO (Mekatronika)</span>
-                    </label>
+            <!-- Sub-Filter & Manajemen Kelas -->
+            <div x-show="activeRole === 'mahasiswa'" x-transition class="space-y-4">
+                <div>
+                    <p class="text-xs font-black text-blue-900 uppercase tracking-widest mb-3 border-b-2 border-blue-200 pb-1">Filter Program Studi</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
+                            <input type="radio" name="prodi" value="ALL" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                            <span class="font-bold text-sm text-gray-700">Semua Prodi</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
+                            <input type="radio" name="prodi" value="TRIN" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                            <span class="font-bold text-sm text-gray-700">TRIN (AEC)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
+                            <input type="radio" name="prodi" value="TRO" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                            <span class="font-bold text-sm text-gray-700">TRO (AEB)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded">
+                            <input type="radio" name="prodi" value="TRMO" x-model="filterProdi" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                            <span class="font-bold text-sm text-gray-700">TRMO (AEA)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Card Pengaturan Daftar Kelas per Prodi -->
+                <div class="bg-white border-2 border-blue-300 rounded-lg p-3 shadow-sm space-y-2">
+                    <div class="flex justify-between items-center border-b pb-1">
+                        <p class="text-xs font-black text-blue-900 uppercase">Atur Nomor Kelas</p>
+                        <select x-model="configProdiTarget" class="text-xs font-bold border rounded px-1 py-0.5 bg-blue-50">
+                            <option value="TRIN">TRIN</option>
+                            <option value="TRO">TRO</option>
+                            <option value="TRMO">TRMO</option>
+                        </select>
+                    </div>
+                    <p class="text-[11px] text-gray-500">Pilih nomor kelas aktif untuk <span class="font-bold text-blue-900" x-text="configProdiTarget"></span> (Tingkat 3):</p>
+                    <div class="grid grid-cols-4 gap-1">
+                        <label class="flex flex-col items-center justify-center p-1 border rounded bg-gray-50 cursor-pointer hover:bg-blue-50">
+                            <span class="text-xs font-bold">1</span>
+                            <input type="checkbox" value="1" x-model="activeClasses[configProdiTarget]" class="w-3.5 h-3.5 text-blue-600">
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-1 border rounded bg-gray-50 cursor-pointer hover:bg-blue-50">
+                            <span class="text-xs font-bold">2</span>
+                            <input type="checkbox" value="2" x-model="activeClasses[configProdiTarget]" class="w-3.5 h-3.5 text-blue-600">
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-1 border rounded bg-gray-50 cursor-pointer hover:bg-blue-50">
+                            <span class="text-xs font-bold">3</span>
+                            <input type="checkbox" value="3" x-model="activeClasses[configProdiTarget]" class="w-3.5 h-3.5 text-blue-600">
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-1 border rounded bg-gray-50 cursor-pointer hover:bg-blue-50">
+                            <span class="text-xs font-bold">4</span>
+                            <input type="checkbox" value="4" x-model="activeClasses[configProdiTarget]" class="w-3.5 h-3.5 text-blue-600">
+                        </label>
+                    </div>
+                    <button type="button" @click="saveClassConfig()" class="w-full bg-blue-600 text-white text-xs font-bold py-1.5 rounded hover:bg-blue-700 transition-colors shadow">
+                        Simpan Konfigurasi Kelas
+                    </button>
                 </div>
             </div>
 
@@ -106,7 +142,7 @@
                                 <th class="p-3 font-black text-sm uppercase">Password</th>
                                 
                                 <template x-if="activeRole === 'mahasiswa'">
-                                    <th class="p-3 font-black text-sm uppercase">Prodi & Kelas</th>
+                                    <th class="p-3 font-black text-sm uppercase whitespace-nowrap">Prodi & Kelas</th>
                                 </template>
                                 
                                 <template x-if="activeRole === 'mahasiswa'">
@@ -137,7 +173,7 @@
                                     </td>
                                     <td class="p-3 font-bold text-gray-700 text-sm" x-text="user.email"></td>
                                     
-                                    <!-- Kolom Password (Posisi ke-3, sejajar dengan Header Password) -->
+                                    <!-- Kolom Password -->
                                     <td class="p-3" x-data="{ showPw: false }">
                                         <div class="flex items-center gap-1.5">
                                             <span class="font-mono text-xs font-bold" :class="showPw ? 'text-gray-800' : 'text-gray-400'" x-text="showPw ? (user.plain_password || '—') : '••••••••'"></span>
@@ -149,12 +185,12 @@
                                     </td>
 
                                     <template x-if="activeRole === 'mahasiswa'">
-                                        <td class="p-3">
-                                            <span class="bg-blue-100 text-blue-800 border border-blue-300 px-2 py-0.5 rounded text-xs font-black" x-text="user.prodi + ' - ' + user.kelas"></span>
+                                        <td class="p-3 whitespace-nowrap">
+                                            <span class="inline-block bg-blue-100 text-blue-800 border border-blue-300 px-2.5 py-1 rounded text-xs font-black shadow-sm" x-text="user.prodi + ' - ' + user.kelas"></span>
                                         </td>
                                     </template>
 
-                                    <!-- Kolom Dosen Pembimbing untuk Mahasiswa -->
+                                    <!-- Kolom Dosen Pembimbing -->
                                     <template x-if="activeRole === 'mahasiswa'">
                                         <td class="p-3">
                                             <span :class="user.dosen_name ? 'bg-purple-100 border-purple-300 text-purple-900' : 'bg-gray-100 border-gray-300 text-gray-400 italic'" class="border px-2 py-1 rounded text-xs font-bold whitespace-nowrap" x-text="user.dosen_name || 'Belum Ditentukan'"></span>
@@ -241,7 +277,7 @@
 
     </div>
 
-    <!-- MODAL TAMBAH AKUN -->
+    <!-- MODAL TAMBAH & EDIT AKUN -->
     <div x-show="showModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <div x-show="showModal" x-transition.opacity class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" @click="showModal = false"></div>
@@ -262,7 +298,7 @@
                         <input type="text" x-model="formUser.name" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600" placeholder="Masukkan nama...">
                     </div>
 
-                    <!-- Input Identitas Khusus Mahasiswa -->
+                    <!-- Input Khusus Mahasiswa -->
                     <template x-if="activeRole === 'mahasiswa' || activeRole === 'perusahaan'">
                         <div class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
@@ -272,7 +308,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">Program Studi</label>
-                                    <select x-model="formUser.prodi" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600">
+                                    <select x-model="formUser.prodi" @change="onProdiChange()" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600 bg-white">
                                         <option value="" disabled>Pilih Prodi</option>
                                         <option value="TRIN">TRIN</option>
                                         <option value="TRO">TRO</option>
@@ -280,12 +316,17 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-1">Kelas</label>
-                                    <input type="text" x-model="formUser.kelas" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600" placeholder="Cth: 3 AEC-2">
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Pilih Kelas</label>
+                                    <select x-model="formUser.kelas" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600 bg-white">
+                                        <option value="" disabled>-- Pilih Kelas --</option>
+                                        <template x-for="cls in getGeneratedClasses()" :key="cls">
+                                            <option :value="cls" x-text="cls"></option>
+                                        </template>
+                                    </select>
                                 </div>
                             </div>
 
-                            <!-- Pilihan Dosen Pembimbing untuk Mahasiswa Baru -->
+                            <!-- Pilihan Dosen Pembimbing -->
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Dosen Pembimbing (Opsional)</label>
                                 <select x-model="formUser.nidn" class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600 bg-white">
@@ -296,7 +337,7 @@
                                 </select>
                             </div>
 
-                            <!-- Pilihan Mentor Industri untuk Mahasiswa Baru -->
+                            <!-- Pilihan Mentor Industri -->
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Mentor Industri (Opsional)</label>
                                 <select x-model="formUser.id_pem" class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600 bg-white">
@@ -309,7 +350,7 @@
                         </div>
                     </template>
 
-                    <!-- Input Identitas Khusus Dosen -->
+                    <!-- Input Khusus Dosen -->
                     <template x-if="activeRole === 'dosen'">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">NIP Dosen</label>
@@ -317,14 +358,16 @@
                         </div>
                     </template>
 
-                    <!-- Input Penempatan PT Khusus Mhs/Mentor -->
+                    <!-- Input Penempatan PT -->
                     <template x-if="activeRole === 'mahasiswa' || activeRole === 'mentor' || activeRole === 'perusahaan'">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1" x-text="activeRole === 'mentor' ? 'Penempatan Sebagai Mentor di PT' : 'Penempatan Magang (PT)'"></label>
-                            <input type="text" x-model="formUser.pt" required list="pt-list" class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600 bg-white" placeholder="Ketik atau pilih PT...">
-                            <datalist id="pt-list">
-                                <template x-for="pt in companies" :key="pt"><option :value="pt"></option></template>
-                            </datalist>
+                            <select x-model="formUser.pt" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-blue-600 bg-white">
+                                <option value="" disabled>-- Pilih Perusahaan dari Database --</option>
+                                <template x-for="comp in companies" :key="comp">
+                                    <option :value="comp" x-text="comp"></option>
+                                </template>
+                            </select>
                         </div>
                     </template>
 
@@ -347,7 +390,7 @@
         </div>
     </div>
 
-    <!-- MODAL ATUR PEMBIMBING MAHASISWA -->
+    <!-- MODAL ATUR PEMBIMBING -->
     <div x-show="showAssignModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <div x-show="showAssignModal" x-transition.opacity class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" @click="showAssignModal = false"></div>
@@ -365,7 +408,6 @@
                 </div>
 
                 <form @submit.prevent="saveAssignPembimbing()" class="p-6 bg-gray-50 space-y-4">
-                    
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Dosen Pembimbing</label>
                         <select x-model="formAssign.nidn" class="w-full border-2 border-gray-300 rounded p-2.5 font-bold outline-none focus:border-blue-600 bg-white">
@@ -474,7 +516,6 @@
                 </div>
 
                 <form @submit.prevent="savePerusahaan()" class="p-6 bg-gray-50 space-y-4">
-                    
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-1">Nama Perusahaan / PT *</label>
                         <input type="text" x-model="formPerusahaan.nama_perusahaan" required class="w-full border-2 border-gray-300 rounded p-2 font-bold outline-none focus:border-emerald-600" placeholder="Contoh: PT Astra Honda Motor">
@@ -508,6 +549,7 @@
         return {
             activeRole: 'mahasiswa', 
             filterProdi: 'ALL',
+            configProdiTarget: 'TRIN',
             searchQuery: '',
             showModal: false,
             isEdit: false,
@@ -520,10 +562,15 @@
             dosens: {!! $dosens ?? '[]' !!},
             mentors: {!! $mentors ?? '[]' !!},
 
-            // DATA AKUN DARI DATABASE
+            activeClasses: JSON.parse(localStorage.getItem('polman_active_classes')) || {
+                'TRIN': ['1', '2', '3', '4'],
+                'TRO': ['1', '2', '3', '4'],
+                'TRMO': ['1', '2', '3', '4']
+            },
+
             users: {!! $mappedUsers ?? '[]' !!},
 
-            formUser: { name: '', identifier: '', prodi: '', kelas: '', pt: '', nidn: '', id_pem: '', emailPrefix: '' },
+            formUser: { name: '', identifier: '', prodi: 'TRIN', kelas: '3AEC1', pt: '', nidn: '', id_pem: '', emailPrefix: '' },
             formPerusahaan: { nama_perusahaan: '', alamat: '', kontak: '' },
             formAssign: { nim: '', name: '', identifier: '', nidn: '', id_pem: '' },
             formPassword: { id: '', name: '', email: '', password: '', password_confirmation: '' },
@@ -536,6 +583,30 @@
 
             countUsers(role) {
                 return this.users.filter(u => u.role === role).length;
+            },
+
+            saveClassConfig() {
+                localStorage.setItem('polman_active_classes', JSON.stringify(this.activeClasses));
+                alert('Konfigurasi kelas berhasil disimpan!');
+            },
+
+            getGeneratedClasses() {
+                let p = (this.formUser.prodi || 'TRIN').toUpperCase();
+                let code = 'AEC';
+                if (p === 'TRO') code = 'AEB';
+                if (p === 'TRMO') code = 'AEA';
+
+                let nums = this.activeClasses[p] || ['1', '2', '3', '4'];
+                nums.sort((a,b) => a - b);
+
+                return nums.map(n => `3${code}${n}`);
+            },
+
+            onProdiChange() {
+                let generated = this.getGeneratedClasses();
+                if (generated.length > 0) {
+                    this.formUser.kelas = generated[0];
+                }
             },
 
             getFilteredUsers() {
@@ -566,7 +637,7 @@
 
             openModal() {
                 this.isEdit = false;
-                this.formUser = { name: '', identifier: '', prodi: '', kelas: '', pt: '', nidn: '', id_pem: '', emailPrefix: '' };
+                this.formUser = { name: '', identifier: '', prodi: 'TRIN', kelas: '3AEC1', pt: '', nidn: '', id_pem: '', emailPrefix: '' };
                 this.showModal = true;
             },
 
@@ -577,9 +648,11 @@
                     name: '',
                     emailPrefix: '',
                     identifier: '',
-                    kelas: '',
-                    pt: '',
-                    prodi: 'TRO'
+                    kelas: '3AEC1',
+                    pt: this.companies.length > 0 ? this.companies[0] : '',
+                    prodi: 'TRIN',
+                    nidn: '',
+                    id_pem: ''
                 };
                 this.showModal = true;
             },
@@ -590,10 +663,12 @@
                     id: user.id,
                     name: user.name,
                     emailPrefix: user.email.split('@')[0],
-                    identifier: user.identifier || '',
-                    kelas: user.kelas || '',
-                    pt: user.pt || '',
-                    prodi: user.prodi || 'TRO'
+                    identifier: user.identifier ? user.identifier.replace('NIM: ', '').replace('NIP: ', '') : '',
+                    kelas: user.kelas || '3AEC1',
+                    pt: user.pt || (this.companies.length > 0 ? this.companies[0] : ''),
+                    prodi: user.prodi || 'TRIN',
+                    nidn: user.nidn || '',
+                    id_pem: user.id_pem || ''
                 };
                 this.showModal = true;
             },
@@ -803,20 +878,7 @@
                     let result = await response.json();
                     if (response.ok && result.success) {
                         alert('Dosen & Mentor pembimbing berhasil diperbarui!');
-                        
-                        // Update local user state
-                        let userIndex = this.users.findIndex(u => u.nim === this.formAssign.nim || u.identifier === 'NIM: ' + this.formAssign.nim);
-                        if (userIndex !== -1) {
-                            this.users[userIndex].nidn = this.formAssign.nidn;
-                            this.users[userIndex].id_pem = this.formAssign.id_pem;
-                            this.users[userIndex].dosen_name = result.dosen_name;
-                            this.users[userIndex].mentor_name = result.mentor_name;
-                            if (result.pt) {
-                                this.users[userIndex].pt = result.pt;
-                            }
-                        }
-
-                        this.showAssignModal = false;
+                        window.location.reload();
                     } else {
                         alert('Gagal memperbarui pembimbing: ' + (result.message || 'Terjadi kesalahan'));
                     }

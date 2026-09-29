@@ -8,17 +8,30 @@ use App\Models\LogbookFoto;
 use App\Models\Mahasiswa;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+// Import tambahan untuk fitur Approval QR
+use App\Models\Approval;
+use App\Models\User;
+use Illuminate\Support\Str;
+use App\Notifications\PengajuanTTDNotification;
 
 class MahasiswaController extends Controller
 {
     public function index() 
     {
         $user = Auth::user();
-        $mahasiswa = Mahasiswa::where('user_id', $user->id)->first();
+        // Eager load dosen dan pembimbingIndustri untuk keamanan data relasi
+        $mahasiswa = Mahasiswa::with(['dosen', 'pembimbingIndustri'])->where('user_id', $user->id)->first();
+        
         $logbooks = collect();
         $fotosByDate = [];
+        $approval = null; // TAMBAHAN: Inisialisasi variabel status TTD
 
         if ($mahasiswa) {
+            // TAMBAHAN: Ambil data pengajuan TTD terakhir milik mahasiswa
+            $approval = Approval::where('mahasiswa_nim', $mahasiswa->nim)
+                                ->orderBy('created_at', 'desc')
+                                ->first();
+
             $logbooks = Logbook::where('nim', $mahasiswa->nim)
                 ->orderBy('tanggal', 'asc')
                 ->get();
@@ -52,23 +65,24 @@ class MahasiswaController extends Controller
             $saranDariMentor = \App\Models\SaranMahasiswa::where('nim', $mahasiswa->nim)->orderBy('tanggal', 'desc')->first();
         }
 
-        return view('mahasiswa.dashboard', compact('mahasiswa', 'logbooks', 'fotosByDate', 'perusahaan', 'sarans', 'saranDariMentor', 'parameterSaran'));
+        // TAMBAHAN: Masukkan 'approval' ke dalam compact
+        return view('mahasiswa.dashboard', compact('mahasiswa', 'logbooks', 'fotosByDate', 'perusahaan', 'sarans', 'saranDariMentor', 'parameterSaran', 'approval'));
     }
 
     public function storeLogbook(Request $request)
     {
         $request->validate([
-            'tanggal'                 => 'required|date',
-            'status'                  => 'required|string',
-            'minggu_ke'               => 'nullable|integer',
-            'kegiatan'                => 'nullable|string',
+            'tanggal'                   => 'required|date',
+            'status'                    => 'required|string',
+            'minggu_ke'                 => 'nullable|integer',
+            'kegiatan'                  => 'nullable|string',
             'activities.*.kode'       => 'nullable|string',
             'activities.*.waktu'      => 'nullable|numeric',
             'activities.*.kegiatan'   => 'nullable|string',
             'activities.*.jamMulai'   => 'nullable|string',
             'activities.*.jamSelesai' => 'nullable|string',
-            'fotos'                   => 'nullable|array',
-            'fotos.*'                 => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'fotos'                     => 'nullable|array',
+            'fotos.*'                   => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         $mahasiswa = Mahasiswa::where('user_id', Auth::id())->first();
@@ -188,32 +202,38 @@ class MahasiswaController extends Controller
         $logbooks = collect();
         $disiplin = null;
         $kuisioner = null;
+        $approvals = collect(); // TAMBAHAN: Inisialisasi awal
 
         if ($mahasiswa) {
-            // Penilaian dari Dosen (nidn tidak null)
+            // Penilaian dari Dosen
             $penilaianDosen = \App\Models\Penilaian::where('nim', $mahasiswa->nim)
                 ->whereNotNull('nidn')
                 ->first();
 
-            // Penilaian dari Mentor (id_pem tidak null)
+            // Penilaian dari Mentor
             $penilaianMentor = \App\Models\Penilaian::where('nim', $mahasiswa->nim)
                 ->whereNotNull('id_pem')
                 ->first();
 
-            // Logbook yang sudah ada
+            // Logbook
             $logbooks = \App\Models\Logbook::with('mataKuliah')
                 ->where('nim', $mahasiswa->nim)
                 ->orderBy('tanggal')
                 ->get();
                 
-            // Rincian Penilaian Mentor
             $disiplin = \App\Models\DisiplinMahasiswa::where('nim', $mahasiswa->nim)->first();
             $kuisioner = \App\Models\KuisionerMentor::where('nim', $mahasiswa->nim)->first();
+
+            // TAMBAHAN: Ambil data pengajuan TTD, jadikan key (index) berdasarkan jenis_form
+            $approvals = \App\Models\Approval::where('mahasiswa_nim', $mahasiswa->nim)
+                ->get()
+                ->keyBy('jenis_form');
         }
 
         $parameters = \App\Models\ParameterPenilaian::all();
 
-        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks', 'disiplin', 'kuisioner', 'parameters'));
+        // TAMBAHAN: Masukkan variabel 'approvals' ke compact
+        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks', 'disiplin', 'kuisioner', 'parameters', 'approvals'));
     }
 
     public function transkrip($nim) {
@@ -226,6 +246,7 @@ class MahasiswaController extends Controller
         $logbooks = collect();
         $disiplin = null;
         $kuisioner = null;
+        $approvals = collect(); // TAMBAHAN
 
         if ($mahasiswa) {
             $penilaianDosen = \App\Models\Penilaian::where('nim', $mahasiswa->nim)
@@ -243,11 +264,53 @@ class MahasiswaController extends Controller
                 
             $disiplin = \App\Models\DisiplinMahasiswa::where('nim', $mahasiswa->nim)->first();
             $kuisioner = \App\Models\KuisionerMentor::where('nim', $mahasiswa->nim)->first();
+
+            // TAMBAHAN: Ambil data TTD
+            $approvals = \App\Models\Approval::where('mahasiswa_nim', $mahasiswa->nim)
+                ->get()
+                ->keyBy('jenis_form');
         }
 
         $parameters = \App\Models\ParameterPenilaian::all();
 
-        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks', 'disiplin', 'kuisioner', 'parameters'));
+        // TAMBAHAN: Masukkan variabel 'approvals' ke compact
+        return view('mahasiswa.nilai', compact('mahasiswa', 'penilaianDosen', 'penilaianMentor', 'logbooks', 'disiplin', 'kuisioner', 'parameters', 'approvals'));
+    }
+
+    public function apiNilaiLogbook()
+    {
+        $mahasiswa = Mahasiswa::where('user_id', Auth::id())->firstOrFail();
+
+        $nilaiLogbook = Logbook::query()
+            ->where('nim', $mahasiswa->nim)
+            ->whereNotNull('nilai')
+            ->selectRaw('minggu_ke, AVG(nilai) as nilai')
+            ->groupBy('minggu_ke')
+            ->orderBy('minggu_ke')
+            ->get()
+            ->map(function ($logbook) {
+                $nilai = round((float) $logbook->nilai, 2);
+                $predikat = match (true) {
+                    $nilai >= 85 => 'A',
+                    $nilai >= 80 => 'AB',
+                    $nilai >= 70 => 'B',
+                    $nilai >= 65 => 'BC',
+                    $nilai >= 55 => 'C',
+                    $nilai >= 40 => 'D',
+                    default => 'E',
+                };
+
+                return [
+                    'minggu' => (int) $logbook->minggu_ke,
+                    'nilai' => $nilai,
+                    'predikat' => $predikat,
+                ];
+            });
+
+        return response()->json([
+            'logbook' => $nilaiLogbook,
+            'updated_at' => now()->toIso8601String(),
+        ]);
     }
 
     public function apiRekapanJam($nim) {
@@ -326,5 +389,100 @@ class MahasiswaController extends Controller
         ]);
 
         return response()->json(['message' => 'Saran dan masukan berhasil dikirim.']);
+    }
+
+    // batalQR
+    // batalQR
+    public function batalQR(Request $request)
+    {
+        // Cari data pengajuan berdasarkan TOKEN (hapus pembatasan status 'pending' agar status 'accepted' juga bisa di-reset)
+        $approval = \App\Models\Approval::where('token_verifikasi', $request->token)
+            ->first();
+
+        if ($approval) {
+            $approval->delete(); // Hapus dari database
+            return response()->json(['status' => 'success']);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'Pengajuan tidak ditemukan.']);
+    }
+
+    // ==========================================
+    // FUNGSI MENGAJUKAN TTD QR (DIPERBAIKI)
+    // ==========================================
+    public function ajukanQR(Request $request)
+    {
+        $request->validate([
+            'jenis_form' => 'required|string',
+        ]);
+
+        // Muat data mahasiswa beserta relasi pembimbingnya
+        $mahasiswa = Mahasiswa::with(['dosen', 'pembimbingIndustri'])
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$mahasiswa) {
+            return response()->json(['status' => 'error', 'success' => false, 'message' => 'Data mahasiswa tidak ditemukan.'], 404);
+        }
+
+        $nim = $mahasiswa->nim;
+        $jenisForm = $request->jenis_form;
+
+        // Tentukan pihak penilai
+        $pihakPenilai = in_array($jenisForm, ['presentasi', 'makalah']) ? 'dosen' : 'mentor';
+
+        // Ambil ID User dari Dosen atau Mentor terkait untuk kolom penilai_id
+        if ($pihakPenilai === 'dosen') {
+            $penilaiId = $mahasiswa->dosen->user_id ?? null;
+        } else {
+            $penilaiId = $mahasiswa->pembimbingIndustri->user_id ?? null;
+        }
+
+        if (!$penilaiId) {
+            return response()->json(['status' => 'error', 'success' => false, 'message' => 'Data Pembimbing/Mentor belum diatur atau akun User penilai tidak ditemukan.'], 400);
+        }
+
+        // Cek apakah sudah ada pengajuan dengan status 'pending' atau 'accepted'
+        $existing = Approval::where('mahasiswa_nim', $nim)
+            ->where('jenis_form', $jenisForm)
+            ->whereIn('status', ['pending', 'accepted'])
+            ->first();
+
+        if ($existing) {
+            return response()->json(['status' => 'error', 'success' => false, 'message' => 'Pengajuan sedang diproses atau sudah disetujui.'], 400);
+        }
+
+        // Hapus sisa data riwayat pengajuan form ini yang berstatus 'rejected' (jika ada) agar bersih murni
+        Approval::where('mahasiswa_nim', $nim)
+            ->where('jenis_form', $jenisForm)
+            ->delete();
+
+        // Buat token unik untuk URL approval (Go to page)
+        $token = Str::random(40);
+
+        // Buat data approval baru
+        $approval = Approval::create([
+            'mahasiswa_nim' => $nim,
+            'jenis_form' => $jenisForm,
+            'pihak_penilai' => $pihakPenilai,
+            'penilai_id' => $penilaiId,
+            'status' => 'pending',
+            'token_verifikasi' => $token,
+            'alasan_reject' => null,
+            'qr_code_path' => null 
+        ]);
+
+        // Kirim Notifikasi Baru ke bel (lonceng) User Dosen/Mentor
+        $penilai = User::find($penilaiId);
+        if ($penilai && class_exists(PengajuanTTDNotification::class)) {
+            $penilai->notify(new PengajuanTTDNotification($approval));
+        }
+
+        $namaPihak = ucfirst($pihakPenilai); // Menjadi 'Dosen' atau 'Mentor'
+        return response()->json([
+            'status' => 'success', 
+            'success' => true, 
+            'message' => 'Pengajuan TTD berhasil dikirim ke ' . $namaPihak . '.'
+        ]);
     }
 }

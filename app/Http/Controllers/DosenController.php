@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\Penilaian;
+use App\Models\Approval; 
 use Illuminate\Support\Facades\Auth;
 
 class DosenController extends Controller
@@ -16,6 +17,7 @@ class DosenController extends Controller
         $dosen = Dosen::where('user_id', $user->id)->first();
         
         $jadwals = collect();
+        $notifikasiTTD = collect(); // Inisialisasi awal notifikasi
 
         if ($dosen) {
             // Hanya tampilkan mahasiswa yang sudah ditugaskan oleh admin (nidn sesuai)
@@ -27,13 +29,36 @@ class DosenController extends Controller
             $jadwals = \App\Models\JadwalMonitoring::where('nidn', $dosen->nidn)
                 ->orderBy('tanggal', 'asc')
                 ->get();
+
+            // TAMBAHAN: Ambil pengajuan TTD (Presentasi & Makalah) yang berelasi dengan mahasiswa bimbingan dosen ini
+            $notifikasiTTD = Approval::with('mahasiswa')
+                ->whereHas('mahasiswa', function($query) use ($dosen) {
+                    $query->where('nidn', $dosen->nidn); 
+                })
+                ->whereIn('jenis_form', ['presentasi', 'makalah'])
+                ->where('status', 'pending')
+                ->get();
         } else {
             $mahasiswas = collect();
         }
         
         $parameters = \App\Models\ParameterPenilaian::all();
 
-        return view('dosen.dashboard', compact('dosen', 'mahasiswas', 'jadwals', 'parameters'));
+        // Mengirim notifikasiTTD ke view
+        return view('dosen.dashboard', compact('dosen', 'mahasiswas', 'jadwals', 'parameters', 'notifikasiTTD'));
+    }
+
+    public function riwayatTtd()
+    {
+    // Mengambil data approval yang statusnya sudah BUKAN pending (sudah di-acc/reject)
+    // Sesuaikan nama kolom mentor_id / dosen_id dengan database Anda
+    $riwayat = Approval::with('mahasiswa') 
+                ->where('penilai_id', auth()->user()->id)
+                ->whereIn('status', ['accepted', 'rejected'])
+                ->orderBy('updated_at', 'desc')
+                ->paginate(15);
+
+    return view('dosen.riwayat_ttd', compact('riwayat'));
     }
 
     public function storePenilaian(Request $request)

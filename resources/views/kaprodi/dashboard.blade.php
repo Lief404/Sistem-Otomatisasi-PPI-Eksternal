@@ -8,7 +8,58 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-blue-900 pb-4">
         <div>
             <h2 class="text-3xl font-black text-blue-900 tracking-wide">Dashboard KPS</h2>
-            <p class="text-gray-600 mt-1 font-medium">Pantau dan kelola saran masukan dari mahasiswa untuk perusahaan.</p>
+            <p class="text-gray-600 mt-1 font-medium">Pantau dan kelola saran masukan serta form evaluasi industri.</p>
+        </div>
+    </div>
+
+    <!-- FILTER BAR NEO-BRUTALISM -->
+    <div class="bg-[#FFB347] p-4 rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] mb-8">
+        <h3 class="text-black font-black uppercase tracking-widest mb-3 text-sm flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+            Filter Data Spesifik
+        </h3>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+                <select x-model="filterKelas" @change="filterNim = ''" class="w-full p-3 bg-white border-2 border-black rounded-lg font-bold outline-none cursor-pointer focus:ring-2 focus:ring-black">
+                    <option value="">-- SEMUA BATCH / KELAS --</option>
+                    @foreach($kelasAktif ?? [] as $kls)
+                        <option value="{{ $kls }}">{{ $kls }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex-1">
+                <select x-model="filterNim" class="w-full p-3 bg-white border-2 border-black rounded-lg font-bold outline-none cursor-pointer focus:ring-2 focus:ring-black">
+                    <option value="">-- SEMUA MAHASISWA --</option>
+                    @foreach($mahasiswas ?? [] as $m)
+                        <option value="{{ $m->nim }}" x-show="filterKelas === '' || filterKelas === '{{ $m->kelas }}'">
+                            {{ $m->nama_mhs }} ({{ $m->kelas }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS: CETAK REKAP PDF -->
+    <div class="mb-8 p-6 bg-white rounded-xl border-4 border-black shadow-[6px_6px_0_0_#000] flex flex-col md:flex-row gap-6 justify-between items-center">
+        <div>
+            <h3 class="text-xl font-black uppercase tracking-widest text-black">Cetak Transkrip / Rekapitulasi</h3>
+            <p class="text-gray-600 font-bold mt-1 text-sm">Download rekap nilai akhir PPI ke dalam format PDF.</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <!-- Tombol Cetak Seluruh Kelas -->
+            <a href="{{ route('kaprodi.rekap_all', ['export' => 'pdf']) }}" class="flex items-center gap-2 bg-red-600 text-white font-black px-5 py-2 border-2 border-black shadow-[3px_3px_0_0_#000] hover:translate-y-px hover:translate-x-px hover:shadow-none transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Semua Kelas
+            </a>
+
+            <!-- Looping Tombol per Kelas Aktif (3AEC1, 3AEC2, dsb) -->
+            @foreach($kelasAktif as $kls)
+            <a href="{{ route('kaprodi.rekap_all', ['export' => 'pdf', 'kelas' => $kls]) }}" class="flex items-center gap-2 bg-blue-600 text-white font-black px-5 py-2 border-2 border-black shadow-[3px_3px_0_0_#000] hover:translate-y-px hover:translate-x-px hover:shadow-none transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Kelas {{ $kls }}
+            </a>
+            @endforeach
         </div>
     </div>
 
@@ -28,7 +79,7 @@
                 <span class="text-sm font-bold bg-black/20 px-3 py-1 rounded-full">{{ count($sarans) }} Data</span>
             </div>
 
-            <div class="p-6 bg-gray-50">
+            <div class="p-6 bg-gray-50 max-h-[600px] overflow-y-auto">
                 @if(count($sarans) === 0)
                     <div class="p-10 text-center text-gray-400 font-bold italic border-2 border-dashed border-gray-300 rounded-xl">
                         Belum ada saran atau masukan dari mahasiswa.
@@ -36,7 +87,8 @@
                 @else
                     <div class="space-y-4">
                         @foreach($sarans as $saran)
-                            <div class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-yellow-400 transition-colors">
+                            <div x-show="(filterKelas === '' || '{{ $saran->mahasiswa->kelas ?? '' }}' === filterKelas) && (filterNim === '' || '{{ $saran->mahasiswa->nim ?? '' }}' === filterNim)" 
+                                 class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-yellow-400 transition-colors">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                                     <div class="flex items-center gap-2">
                                         <span class="bg-blue-100 text-blue-800 border border-blue-300 px-2 py-1 rounded text-xs font-black">{{ $saran->tanggal }}</span>
@@ -104,7 +156,8 @@
                     @else
                         <div class="space-y-4">
                             @foreach($disiplins as $disiplin)
-                                <div class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-purple-400 transition-colors">
+                                <div x-show="(filterKelas === '' || '{{ $disiplin->mahasiswa->kelas ?? '' }}' === filterKelas) && (filterNim === '' || '{{ $disiplin->mahasiswa->nim ?? '' }}' === filterNim)"
+                                     class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-purple-400 transition-colors">
                                     <div class="flex flex-col gap-2 mb-3">
                                         <div class="flex justify-between items-center">
                                             <span class="bg-purple-100 text-purple-800 border border-purple-300 px-2 py-1 rounded text-xs font-black">{{ $disiplin->tanggal }}</span>
@@ -159,8 +212,8 @@
                     @else
                         <div class="space-y-4">
                             @foreach($kuisioners as $kuis)
-
-                                <div class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-emerald-400 transition-colors">
+                                <div x-show="(filterKelas === '' || '{{ $kuis->mahasiswa->kelas ?? '' }}' === filterKelas) && (filterNim === '' || '{{ $kuis->mahasiswa->nim ?? '' }}' === filterNim)"
+                                     class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-emerald-400 transition-colors">
                                     <div class="flex flex-col gap-2 mb-3">
                                         <div class="flex justify-between items-center">
                                             <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1 rounded text-xs font-black">{{ $kuis->tanggal }}</span>
@@ -219,7 +272,8 @@
                 @else
                     <div class="space-y-4">
                         @foreach($saranMentors as $saran)
-                            <div class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-fuchsia-400 transition-colors">
+                            <div x-show="(filterKelas === '' || '{{ $saran->mahasiswa->kelas ?? '' }}' === filterKelas) && (filterNim === '' || '{{ $saran->mahasiswa->nim ?? '' }}' === filterNim)"
+                                 class="bg-white p-5 rounded-xl border-2 border-gray-200 shadow-sm hover:border-fuchsia-400 transition-colors">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                                     <div class="flex items-center gap-2">
                                         <span class="bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-300 px-2 py-1 rounded text-xs font-black">{{ $saran->tanggal }}</span>
@@ -261,7 +315,6 @@
                 @endif
             </div>
         </div>
-    </div>
     </div>
 
     <!-- MODAL REKAPAN JAM -->
@@ -337,13 +390,19 @@
             </div>
         </div>
     </div>
+    </div>
 
-</div> <!-- Akhir dari div x-data="kaprodiApp()" -->
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     function kaprodiApp() {
         return {
+            // STATE FILTER DINAMIS
+            filterKelas: '',
+            filterNim: '',
+
+            // STATE MODAL
             showRekapanModal: false,
             selectedMahasiswaNim: null,
             selectedMahasiswaNama: '',

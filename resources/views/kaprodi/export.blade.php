@@ -1,0 +1,6 @@
+@extends('kaprodi.app')
+@section('title','Ekspor Transkrip')
+@section('content')
+<div class="max-w-5xl mx-auto bg-white rounded-xl border p-8"><h2 class="text-3xl font-bold text-slate-800">Ekspor Transkrip PPI</h2><p class="text-slate-500 mt-2">Pilih mahasiswa dari prodi Anda untuk membuat transkrip resmi.</p>
+<div class="mt-6 overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-800 text-white"><tr><th class="p-3 text-left">NIM</th><th class="p-3 text-left">Mahasiswa</th><th class="p-3">Kelas</th><th class="p-3">Status</th><th class="p-3"></th></tr></thead><tbody>@foreach($mahasiswas as $m)<tr class="border-b"><td class="p-3">{{ $m->nim }}</td><td class="p-3 font-semibold">{{ $m->nama_mhs }}</td><td class="p-3 text-center">{{ $m->kelas }}</td><td class="p-3 text-center">@if($m->nilai_logbook_lengkap)<span class="text-green-700 font-bold">Lengkap</span>@else<span class="text-amber-700 font-bold">Nilai logbook belum 20 minggu</span>@endif</td><td class="p-3 text-right">@if($m->nilai_logbook_lengkap)<a target="_blank" href="{{ route('kaprodi.transkrip',$m->nim) }}" class="bg-blue-700 text-white px-4 py-2 rounded">Buka / Cetak PDF</a>@else<button disabled class="bg-slate-200 text-slate-400 px-4 py-2 rounded cursor-not-allowed">Ekspor terkunci</button>@endif</td></tr>@endforeach</tbody></table></div></div>
+@endsection
